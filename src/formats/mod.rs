@@ -4,9 +4,9 @@ use crate::model::election::Election;
 use std::collections::BTreeMap;
 use std::path::Path;
 
-pub type BallotReader<'a> = dyn Fn(&Path, BTreeMap<String, String>) -> Election;
+pub type BallotReader = dyn Fn(&Path, BTreeMap<String, String>) -> Election;
 
-pub fn get_reader_for_format<'a, 'b>(format: &str) -> &'a BallotReader<'b> {
+pub fn get_reader_for_format(format: &str) -> &'static BallotReader {
     match format {
         "us_ca_sfo" => &us_ca_sfo::sfo_ballot_reader,
         _ => panic!("The format {} is not implemented.", format),

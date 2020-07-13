@@ -38,6 +38,8 @@ pub struct Election {
 
     pub tabulation: String,
 
+    pub normalization: String,
+
     pub contests: Vec<Contest>,
 
     pub files: BTreeMap<String, String>,

@@ -34,8 +34,8 @@ impl Ballot {
 
 #[derive(Serialize, Deserialize)]
 pub struct Election {
-    candidates: Vec<Candidate>,
-    ballots: Vec<Ballot>,
+    pub candidates: Vec<Candidate>,
+    pub ballots: Vec<Ballot>,
 }
 
 impl Election {

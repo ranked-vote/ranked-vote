@@ -6,6 +6,7 @@ use flate2::{write::GzEncoder, Compression};
 use std::fs::{create_dir_all, File};
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
+use crate::normalizers::normalize_election;
 
 pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
     let raw_path = Path::new(raw_dir);
@@ -35,11 +36,13 @@ pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
                 create_dir_all(&output_base).unwrap();
                 let preprocessed_path = output_base.join("normalized.json.gz");
 
-                let ballots = read_election(
+                let mut ballots = read_election(
                     &election.data_format,
                     &raw_base.join(&election_path),
                     contest.loader_params.clone().unwrap_or_default(),
                 );
+
+                ballots = normalize_election(&election.normalization, ballots);
 
                 let preprocessed = ElectionPreprocessed {
                     meta: ElectionMetadata {

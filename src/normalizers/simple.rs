@@ -44,7 +44,7 @@ pub fn simple_normalizer(ballot: Ballot) -> Ballot {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::election::{Candidate, Choice};
+    use crate::model::election::{Choice};
 
     #[test]
     fn test_pass_through() {
