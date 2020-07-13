@@ -1,6 +1,7 @@
 mod commands;
 mod formats;
 mod model;
+mod normalizers;
 mod util;
 
 use crate::commands::info::info;

@@ -27,7 +27,8 @@ impl CandidateData {
     }
 
     pub fn add(&mut self, candidate_id: u32, candidate: Candidate) {
-        self.id_to_index.insert(candidate_id, self.candidates.len() as u32);
+        self.id_to_index
+            .insert(candidate_id, self.candidates.len() as u32);
         self.candidates.push(candidate);
     }
 
@@ -35,7 +36,10 @@ impl CandidateData {
         if Some(candidate_id) == self.write_in {
             Choice::WriteIn
         } else {
-            let index = self.id_to_index.get(&candidate_id).expect("Candidate on ballot but not in master lookup.");
+            let index = self
+                .id_to_index
+                .get(&candidate_id)
+                .expect("Candidate on ballot but not in master lookup.");
 
             Choice::Vote(*index)
         }

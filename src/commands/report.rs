@@ -1,5 +1,5 @@
-use crate::model::election::{ElectionMetadata, ElectionPreprocessed};
 use crate::formats::read_election;
+use crate::model::election::{ElectionMetadata, ElectionPreprocessed};
 use crate::model::metadata::ElectionCommission;
 use crate::util::get_files_from_path;
 use flate2::{write::GzEncoder, Compression};
@@ -12,7 +12,7 @@ pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
     let files = get_files_from_path(Path::new(meta_dir));
 
     for path in files.unwrap() {
-        println!("{}", path.to_string_lossy());
+        eprintln!("Processing: {}", path.to_string_lossy());
         let ec: ElectionCommission = {
             let file = File::open(path.clone()).unwrap();
             let reader = BufReader::new(file);

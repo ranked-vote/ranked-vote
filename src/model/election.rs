@@ -12,7 +12,7 @@ impl Candidate {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 pub enum Choice {
     Vote(u32),
     Undervote,
@@ -20,10 +20,10 @@ pub enum Choice {
     WriteIn,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Ballot {
-    id: String,
-    choices: Vec<Choice>,
+    pub id: String,
+    pub choices: Vec<Choice>,
 }
 
 impl Ballot {
