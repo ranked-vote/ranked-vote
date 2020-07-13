@@ -3,6 +3,10 @@ use std::io::{self};
 use std::path::{Path, PathBuf};
 
 fn walk_path(path: &Path, result: &mut Vec<PathBuf>) -> io::Result<()> {
+    if path.file_name().unwrap().to_str().unwrap().starts_with(".") {
+        // Don't recurse into private directories.
+        return Ok(());
+    }
     if path.is_dir() {
         for entry in fs::read_dir(path)? {
             let entry = entry?;

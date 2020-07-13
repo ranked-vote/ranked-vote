@@ -7,12 +7,11 @@ use std::path::Path;
 
 const CANDIDATE: &str = "Candidate";
 const WRITE_IN: &str = "WRITE-IN";
-const WRITE_IN_PREFIX: &str = "WRITE-IN - ";
+const WRITE_IN_PREFIX: &str = "WRITE-IN ";
 
 #[derive(Debug)]
 struct CandidateData {
     /// Mapping from external candidate numbers to our candidate numbers.
-    id_to_candidate: HashMap<u32, Candidate>,
     id_to_index: HashMap<u32, u32>,
     candidates: Vec<Candidate>,
     write_in: Option<u32>,
@@ -21,7 +20,6 @@ struct CandidateData {
 impl CandidateData {
     pub fn new() -> CandidateData {
         CandidateData {
-            id_to_candidate: HashMap::new(),
             id_to_index: HashMap::new(),
             candidates: Vec::new(),
             write_in: None,
@@ -29,27 +27,17 @@ impl CandidateData {
     }
 
     pub fn add(&mut self, candidate_id: u32, candidate: Candidate) {
-        self.id_to_candidate.insert(candidate_id, candidate);
+        self.id_to_index.insert(candidate_id, self.candidates.len() as u32);
+        self.candidates.push(candidate);
     }
 
-    pub fn id_to_choice(&mut self, candidate_id: u32) -> Choice {
+    pub fn id_to_choice(&self, candidate_id: u32) -> Choice {
         if Some(candidate_id) == self.write_in {
             Choice::WriteIn
         } else {
-            let index = if let Some(c) = self.id_to_index.get(&candidate_id) {
-                *c
-            } else {
-                let candidate = self
-                    .id_to_candidate
-                    .get(&candidate_id)
-                    .expect("Saw a candidate on the ballot who was not in the original data.");
-                let index = self.candidates.len() as u32;
-                self.candidates.push(candidate.clone());
-                self.id_to_index.insert(candidate_id, index);
-                index
-            };
+            let index = self.id_to_index.get(&candidate_id).expect("Candidate on ballot but not in master lookup.");
 
-            Choice::Vote(index)
+            Choice::Vote(*index)
         }
     }
 
@@ -112,13 +100,16 @@ impl BallotRecord {
     }
 }
 
-fn read_candidates(reader: &mut dyn BufRead) -> CandidateData {
+fn read_candidates(reader: &mut dyn BufRead, contest_id: u32) -> CandidateData {
     let mut candidates = CandidateData::new();
     for line in reader.lines() {
         let line = line.unwrap();
         let record = MasterRecord::parse(&line);
 
         if record.record_type == CANDIDATE {
+            if record.contest_id != contest_id {
+                continue;
+            }
             let name = record.description;
 
             if name == WRITE_IN {
@@ -187,7 +178,7 @@ pub fn sfo_ballot_reader<'a>(path: &Path, params: BTreeMap<String, String>) -> E
         .expect("SFO elections should have ballotImage parameter.");
 
     let mut master_reader = BufReader::new(File::open(path.join(master_file)).unwrap());
-    let mut candidates = read_candidates(&mut master_reader);
+    let mut candidates = read_candidates(&mut master_reader, contest);
 
     let mut ballot_reader = BufReader::new(File::open(path.join(ballot_file)).unwrap());
     let ballots = read_ballots(&mut ballot_reader, &mut candidates, contest);
