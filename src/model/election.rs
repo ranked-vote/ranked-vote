@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize, Serializer, Deserializer};
 use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::BTreeMap;
 #[derive(Ord, PartialOrd, Eq, PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub struct Candidate {
@@ -31,24 +31,30 @@ impl<'de> Visitor<'de> for ChoiceVisitor {
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
-    where E: de::Error {
+    where
+        E: de::Error,
+    {
         Ok(Choice::Vote(v as u32))
     }
 
     fn visit_char<E>(self, v: char) -> Result<Self::Value, E>
-    where E: de::Error {
+    where
+        E: de::Error,
+    {
         match v {
             'U' => Ok(Choice::Undervote),
             'O' => Ok(Choice::Overvote),
             'W' => Ok(Choice::WriteIn),
-            _ => Err(de::Error::custom("Expected U, O, or W if char."))
+            _ => Err(de::Error::custom("Expected U, O, or W if char.")),
         }
     }
 }
 
 impl Serialize for Choice {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where S: Serializer {
+    where
+        S: Serializer,
+    {
         match self {
             Choice::Vote(v) => serializer.serialize_u32(*v),
             Choice::Undervote => serializer.serialize_char('U'),
@@ -60,7 +66,9 @@ impl Serialize for Choice {
 
 impl<'de> Deserialize<'de> for Choice {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: Deserializer<'de> {
+    where
+        D: Deserializer<'de>,
+    {
         deserializer.deserialize_any(ChoiceVisitor)
     }
 }

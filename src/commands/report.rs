@@ -1,15 +1,14 @@
 use crate::formats::read_election;
 use crate::model::election::{ElectionMetadata, ElectionPreprocessed};
 use crate::model::metadata::ElectionCommission;
+use crate::model::report::ContestReport;
+use crate::normalizers::normalize_election;
 use crate::util::get_files_from_path;
+use colored::*;
 use flate2::{write::GzEncoder, Compression};
 use std::fs::{create_dir_all, File};
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
-use crate::normalizers::normalize_election;
-use crate::model::report::ContestReport;
-use colored::*;
-
 
 pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
     let raw_path = Path::new(raw_dir);
@@ -71,7 +70,7 @@ pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
 
                 let contest_report = ContestReport {
                     meta: preprocessed.meta.clone(),
-                    ballot_count: preprocessed.ballots.ballots.len() as u32
+                    ballot_count: preprocessed.ballots.ballots.len() as u32,
                 };
 
                 {
