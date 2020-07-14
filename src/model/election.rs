@@ -92,7 +92,7 @@ impl Election {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ElectionMetadata {
     /// Name of election.

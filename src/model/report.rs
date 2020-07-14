@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct ContestReport {
-    meta: ElectionMetadata,
+pub struct ContestReport {
+    pub meta: ElectionMetadata,
+    pub ballotCount: u32,
 }

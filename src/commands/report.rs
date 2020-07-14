@@ -7,6 +7,7 @@ use std::fs::{create_dir_all, File};
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
 use crate::normalizers::normalize_election;
+use crate::model::report::ContestReport;
 
 pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
     let raw_path = Path::new(raw_dir);
@@ -35,6 +36,7 @@ pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
                     .join(&contest.office);
                 create_dir_all(&output_base).unwrap();
                 let preprocessed_path = output_base.join("normalized.json.gz");
+                let report_path = output_base.join("report.json");
 
                 let mut ballots = read_election(
                     &election.data_format,
@@ -61,6 +63,17 @@ pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
                     let gzfile = GzEncoder::new(file, Compression::best());
                     let writer = BufWriter::new(gzfile);
                     serde_json::to_writer(writer, &preprocessed).unwrap();
+                }
+
+                let contest_report = ContestReport {
+                    meta: preprocessed.meta.clone(),
+                    ballotCount: preprocessed.ballots.ballots.len() as u32
+                };
+
+                {
+                    let file = File::create(report_path).unwrap();
+                    let writer = BufWriter::new(file);
+                    serde_json::to_writer_pretty(writer, &contest_report).unwrap();
                 }
             }
         }
