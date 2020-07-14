@@ -45,6 +45,9 @@ pub fn sync(meta_dir: &str, raw_dir: &str) {
             for entry in fs::read_dir(election_path).unwrap() {
                 let entry = entry.unwrap();
                 let filename = String::from(entry.file_name().to_str().unwrap());
+                if filename.starts_with(".") {
+                    continue;
+                };
                 if !expected_files.remove(&filename) {
                     eprintln!(
                         "Found data file: {}",

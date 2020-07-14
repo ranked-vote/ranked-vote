@@ -8,6 +8,8 @@ use std::io::{BufReader, BufWriter};
 use std::path::Path;
 use crate::normalizers::normalize_election;
 use crate::model::report::ContestReport;
+use colored::*;
+
 
 pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
     let raw_path = Path::new(raw_dir);
@@ -25,8 +27,10 @@ pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
         let report_path = Path::new(report_dir);
 
         for (election_path, election) in &ec.elections {
+            eprintln!("Election: {}", election_path.red());
             for contest in &election.contests {
                 let office = ec.offices.get(&contest.office).unwrap();
+                eprintln!("Office: {}", office.name.red());
                 // Figure out if we need to generate report at all.
 
                 // Figure out if we need to preprocess.
