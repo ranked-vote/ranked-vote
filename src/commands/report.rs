@@ -67,7 +67,7 @@ pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
 
                 let contest_report = ContestReport {
                     meta: preprocessed.meta.clone(),
-                    ballotCount: preprocessed.ballots.ballots.len() as u32
+                    ballot_count: preprocessed.ballots.ballots.len() as u32
                 };
 
                 {

@@ -5,5 +5,5 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct ContestReport {
     pub meta: ElectionMetadata,
-    pub ballotCount: u32,
+    pub ballot_count: u32,
 }
