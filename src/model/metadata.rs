@@ -43,6 +43,8 @@ pub struct Election {
     pub contests: Vec<Contest>,
 
     pub files: BTreeMap<String, String>,
+
+    pub website: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -61,16 +61,33 @@ struct MasterRecord {
     _is_provisional: bool,
 }
 
+struct UnicodeString {
+    chars: Vec<char>
+}
+
+impl UnicodeString {
+    pub fn new(string: &str) -> UnicodeString {
+        UnicodeString {
+            chars: string.chars().collect()
+        }
+    }
+
+    pub fn slice(&self, range: std::ops::Range<usize>) -> String {
+        self.chars[range].iter().collect()
+    }
+}
+
 impl MasterRecord {
     fn parse(input: &str) -> MasterRecord {
+        let input = UnicodeString::new(input);
         MasterRecord {
-            record_type: input[0..10].trim().clone().into(),
-            record_id: input[10..17].parse().unwrap(),
-            description: input[17..67].trim().clone().into(),
-            _list_order: input[67..74].parse().unwrap(),
-            contest_id: input[74..81].parse().unwrap(),
-            is_writein: &input[81..82] == "1",
-            _is_provisional: &input[82..83] == "1",
+            record_type: input.slice(0..10).trim().clone().into(),
+            record_id: input.slice(10..17).parse().unwrap(),
+            description: input.slice(17..67).trim().clone().into(),
+            _list_order: input.slice(67..74).parse().unwrap(),
+            contest_id: input.slice(74..81).parse().unwrap(),
+            is_writein: &input.slice(81..82) == "1",
+            _is_provisional: &(input.slice(82..83)) == "1",
         }
     }
 }
@@ -90,16 +107,18 @@ struct BallotRecord {
 
 impl BallotRecord {
     fn parse(input: &str) -> BallotRecord {
+        let input = UnicodeString::new(input);
+
         BallotRecord {
-            contest_id: input[0..7].parse().unwrap(),
-            pref_voter_id: input[7..16].parse().unwrap(),
-            _serial_number: input[16..23].parse().unwrap(),
-            _tally_type_id: input[23..26].parse().unwrap(),
-            _precinct_id: input[26..33].parse().unwrap(),
-            vote_rank: input[33..36].parse().unwrap(),
-            candidate_id: input[36..43].parse().unwrap(),
-            over_vote: &input[43..44] == "1",
-            under_vote: &input[44..45] == "1",
+            contest_id: input.slice(0..7).parse().unwrap(),
+            pref_voter_id: input.slice(7..16).parse().unwrap(),
+            _serial_number: input.slice(16..23).parse().unwrap(),
+            _tally_type_id: input.slice(23..26).parse().unwrap(),
+            _precinct_id: input.slice(26..33).parse().unwrap(),
+            vote_rank: input.slice(33..36).parse().unwrap(),
+            candidate_id: input.slice(36..43).parse().unwrap(),
+            over_vote: &input.slice(43..44) == "1",
+            under_vote: &input.slice(44..45) == "1",
         }
     }
 }

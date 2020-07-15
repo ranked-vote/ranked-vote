@@ -6,7 +6,7 @@ if [ -d election-metadata ]
 then
     echo "Skipping git pull; election-metadata already exists."
 else
-    git clone https://github.com/ranked-vote/election-metadata
+    git clone git@github.com:ranked-vote/election-metadata.git
 fi
 
 mkdir -p raw-data
