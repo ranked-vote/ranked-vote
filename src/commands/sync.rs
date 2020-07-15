@@ -1,25 +1,15 @@
-use crate::model::metadata::ElectionCommission;
-use crate::util::get_files_from_path;
+use crate::read_metadata::read_meta;
+use crate::util::hash::hash_file;
+use crate::util::io::write_serialized;
 use colored::*;
-use sha1::{Digest, Sha1};
 use std::collections::HashSet;
 use std::fs;
-use std::fs::OpenOptions;
-use std::fs::{create_dir_all, File};
-use std::io::{self, BufReader, BufWriter};
+use std::fs::create_dir_all;
 use std::path::Path;
 
 pub fn sync(meta_dir: &str, raw_dir: &str) {
     let raw_path = Path::new(raw_dir);
-    let files = get_files_from_path(Path::new(meta_dir));
-
-    for path in files.unwrap() {
-        let mut ec: ElectionCommission = {
-            let file = File::open(path.clone()).unwrap();
-            let reader = BufReader::new(file);
-            serde_json::from_reader(reader).unwrap()
-        };
-
+    for (path, mut ec) in read_meta(meta_dir) {
         let ec_path = raw_path.join(ec.path.clone());
         if !ec_path.is_dir() {
             eprintln!(
@@ -54,11 +44,7 @@ pub fn sync(meta_dir: &str, raw_dir: &str) {
                         entry.file_name().to_string_lossy().red()
                     );
 
-                    let mut file = File::open(&entry.path()).unwrap();
-                    let mut hasher = Sha1::new();
-                    io::copy(&mut file, &mut hasher).unwrap();
-                    let hash = hasher.finalize();
-                    let hash_str = format!("{:x}", hash);
+                    let hash_str = hash_file(entry.path());
                     eprintln!("Hash: {}", hash_str.green());
 
                     election.files.insert(filename.into(), hash_str);
@@ -70,14 +56,6 @@ pub fn sync(meta_dir: &str, raw_dir: &str) {
             }
         }
 
-        {
-            let file = OpenOptions::new()
-                .write(true)
-                .truncate(true)
-                .open(path)
-                .unwrap();
-            let writer = BufWriter::new(file);
-            serde_json::to_writer_pretty(writer, &ec).unwrap();
-        }
+        write_serialized(&path, &ec);
     }
 }

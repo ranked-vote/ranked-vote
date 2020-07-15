@@ -3,12 +3,14 @@ mod formats;
 mod model;
 mod normalizers;
 mod util;
+mod read_metadata;
+mod report;
 
 use crate::commands::info::info;
 use crate::commands::report::report;
 use crate::commands::sync::sync;
 use crate::model::metadata::ElectionCommission;
-use crate::util::get_files_from_path;
+use crate::util::path::get_files_from_path;
 use clap::{App, Arg, SubCommand};
 use colored::*;
 use std::fs::File;

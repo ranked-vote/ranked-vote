@@ -14,7 +14,7 @@ pub struct ElectionCommission {
     /// A mapping from id of elected positions to their display names.
     pub offices: BTreeMap<String, Office>,
     /// A list of elections under this commission.
-    pub elections: BTreeMap<String, Election>,
+    pub elections: BTreeMap<String, ElectionMetadata>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -27,7 +27,7 @@ pub struct Office {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Election {
+pub struct ElectionMetadata {
     /// Name of election.
     pub name: String,
 

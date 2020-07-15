@@ -1,4 +1,5 @@
 use crate::model::election::{Ballot, Candidate, Choice, Election};
+use crate::util::string::UnicodeString;
 use itertools::Itertools;
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
@@ -59,22 +60,6 @@ struct MasterRecord {
     contest_id: u32,
     is_writein: bool,
     _is_provisional: bool,
-}
-
-struct UnicodeString {
-    chars: Vec<char>
-}
-
-impl UnicodeString {
-    pub fn new(string: &str) -> UnicodeString {
-        UnicodeString {
-            chars: string.chars().collect()
-        }
-    }
-
-    pub fn slice(&self, range: std::ops::Range<usize>) -> String {
-        self.chars[range].iter().collect()
-    }
 }
 
 impl MasterRecord {
@@ -187,24 +172,44 @@ fn read_ballots<'a>(
     ballots
 }
 
+struct ReaderOptions {
+    contest: u32,
+    master_file: String,
+    ballot_file: String,
+}
+
+impl ReaderOptions {
+    pub fn from_params(params: BTreeMap<String, String>) -> ReaderOptions {
+        let contest: u32 = params
+            .get("contest")
+            .expect("SFO elections should have a contest param.")
+            .parse()
+            .expect("contest param should be a number.");
+        let master_file = params
+            .get("masterLookup")
+            .expect("SFO elections should have masterLookup parameter.")
+            .clone();
+        let ballot_file = params
+            .get("ballotImage")
+            .expect("SFO elections should have ballotImage parameter.")
+            .clone();
+
+        ReaderOptions {
+            contest,
+            master_file,
+            ballot_file,
+        }
+    }
+}
+
 pub fn sfo_ballot_reader<'a>(path: &Path, params: BTreeMap<String, String>) -> Election {
-    let contest: u32 = params
-        .get("contest")
-        .expect("SFO elections should have a contest param.")
-        .parse()
-        .expect("contest param should be a number.");
-    let master_file = params
-        .get("masterLookup")
-        .expect("SFO elections should have masterLookup parameter.");
-    let ballot_file = params
-        .get("ballotImage")
-        .expect("SFO elections should have ballotImage parameter.");
+    let options = ReaderOptions::from_params(params);
 
-    let mut master_reader = BufReader::new(File::open(path.join(master_file)).unwrap());
-    let mut candidates = read_candidates(&mut master_reader, contest);
+    let mut master_reader = BufReader::new(File::open(path.join(options.master_file)).unwrap());
+    let mut candidates = read_candidates(&mut master_reader, options.contest);
 
-    let mut ballot_reader = BufReader::new(File::open(path.join(ballot_file)).unwrap());
-    let ballots = read_ballots(&mut ballot_reader, &mut candidates, contest);
+    let mut ballot_reader = BufReader::new(File::open(path.join(options.ballot_file)).unwrap());
+    let ballots = read_ballots(&mut ballot_reader, &mut candidates, options.contest);
 
     Election::new(candidates.to_vec(), ballots)
 }

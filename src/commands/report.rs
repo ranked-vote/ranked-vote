@@ -1,27 +1,16 @@
 use crate::formats::read_election;
-use crate::model::election::{ElectionMetadata, ElectionPreprocessed};
-use crate::model::metadata::ElectionCommission;
-use crate::model::report::ContestReport;
+use crate::model::election::{ElectionInfo, ElectionPreprocessed};
 use crate::normalizers::normalize_election;
-use crate::util::get_files_from_path;
+use crate::read_metadata::read_meta;
+use crate::report::{generate_report, preprocess_election};
+use crate::util::io::write_serialized;
 use colored::*;
-use flate2::{write::GzEncoder, Compression};
-use std::fs::{create_dir_all, File};
-use std::io::{BufReader, BufWriter};
+use std::fs::create_dir_all;
 use std::path::Path;
 
 pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
     let raw_path = Path::new(raw_dir);
-    let files = get_files_from_path(Path::new(meta_dir));
-
-    for path in files.unwrap() {
-        eprintln!("Processing: {}", path.to_string_lossy());
-        let ec: ElectionCommission = {
-            let file = File::open(path.clone()).unwrap();
-            let reader = BufReader::new(file);
-            serde_json::from_reader(reader).unwrap()
-        };
-
+    for (_, ec) in read_meta(meta_dir) {
         let raw_base = raw_path.join(ec.path.clone());
         let report_path = Path::new(report_dir);
 
@@ -39,45 +28,17 @@ pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
                     .join(&contest.office);
                 create_dir_all(&output_base).unwrap();
                 let preprocessed_path = output_base.join("normalized.json.gz");
+
+                let preprocessed =
+                    preprocess_election(&raw_base, election, election_path, &ec, contest);
+
                 let report_path = output_base.join("report.json");
 
-                let mut ballots = read_election(
-                    &election.data_format,
-                    &raw_base.join(&election_path),
-                    contest.loader_params.clone().unwrap_or_default(),
-                );
+                write_serialized(&preprocessed_path, &preprocessed);
 
-                ballots = normalize_election(&election.normalization, ballots);
+                let contest_report = generate_report(&preprocessed);
 
-                let preprocessed = ElectionPreprocessed {
-                    meta: ElectionMetadata {
-                        name: office.name.clone(),
-                        office: contest.office.clone(),
-                        date: election.date.clone(),
-                        data_format: election.data_format.clone(),
-                        tabulation: election.tabulation.clone(),
-                        loader_params: contest.loader_params.clone(),
-                    },
-                    ballots,
-                };
-
-                {
-                    let file = File::create(preprocessed_path).unwrap();
-                    let gzfile = GzEncoder::new(file, Compression::best());
-                    let writer = BufWriter::new(gzfile);
-                    serde_json::to_writer(writer, &preprocessed).unwrap();
-                }
-
-                let contest_report = ContestReport {
-                    meta: preprocessed.meta.clone(),
-                    ballot_count: preprocessed.ballots.ballots.len() as u32,
-                };
-
-                {
-                    let file = File::create(report_path).unwrap();
-                    let writer = BufWriter::new(file);
-                    serde_json::to_writer_pretty(writer, &contest_report).unwrap();
-                }
+                write_serialized(&report_path, &contest_report);
             }
         }
     }
