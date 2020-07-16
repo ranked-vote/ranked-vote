@@ -2,9 +2,9 @@ mod commands;
 mod formats;
 mod model;
 mod normalizers;
-mod util;
 mod read_metadata;
 mod report;
+mod util;
 
 use crate::commands::info::info;
 use crate::commands::report::report;
@@ -66,6 +66,17 @@ fn main() {
                         .index(3)
                         .required(true)
                         .help("report output directory"),
+                )
+                .arg(
+                    Arg::with_name("force-preprocess")
+                        .long("force-preprocess")
+                        .short("p"),
+                )
+                .arg(
+                    Arg::with_name("force-report")
+                        .long("force-report")
+                        .short("r")
+                        .takes_value(false),
                 ),
         )
         .get_matches();
@@ -96,7 +107,15 @@ fn main() {
         let meta_dir = matches.value_of("meta-dir").unwrap();
         let raw_dir = matches.value_of("raw-data-dir").unwrap();
         let report_dir = matches.value_of("report-dir").unwrap();
+        let force_preprocess = matches.is_present("force-preprocess");
+        let force_report = matches.is_present("force-report");
 
-        report(meta_dir, raw_dir, report_dir);
+        report(
+            meta_dir,
+            raw_dir,
+            report_dir,
+            force_preprocess,
+            force_report,
+        );
     }
 }

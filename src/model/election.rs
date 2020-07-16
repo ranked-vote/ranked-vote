@@ -37,14 +37,14 @@ impl<'de> Visitor<'de> for ChoiceVisitor {
         Ok(Choice::Vote(v as u32))
     }
 
-    fn visit_char<E>(self, v: char) -> Result<Self::Value, E>
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
         match v {
-            'U' => Ok(Choice::Undervote),
-            'O' => Ok(Choice::Overvote),
-            'W' => Ok(Choice::WriteIn),
+            "U" => Ok(Choice::Undervote),
+            "O" => Ok(Choice::Overvote),
+            "W" => Ok(Choice::WriteIn),
             _ => Err(de::Error::custom("Expected U, O, or W if char.")),
         }
     }
