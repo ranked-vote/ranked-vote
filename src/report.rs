@@ -2,7 +2,6 @@ use crate::formats::read_election;
 use crate::model::election::{ElectionPreprocessed,ElectionInfo};
 use crate::model::metadata::{ElectionMetadata, Contest, ElectionCommission};
 use crate::model::report::ContestReport;
-use std::collections::BTreeMap;
 use std::path::Path;
 use crate::normalizers::normalize_election;
 

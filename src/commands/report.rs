@@ -1,9 +1,7 @@
-use crate::formats::read_election;
-use crate::model::election::{ElectionInfo, ElectionPreprocessed};
-use crate::normalizers::normalize_election;
+use crate::model::election::ElectionPreprocessed;
 use crate::read_metadata::read_meta;
 use crate::report::{generate_report, preprocess_election};
-use crate::util::io::write_serialized;
+use crate::util::io::{write_serialized, read_serialized};
 use colored::*;
 use std::fs::create_dir_all;
 use std::path::Path;
@@ -19,22 +17,31 @@ pub fn report(meta_dir: &str, raw_dir: &str, report_dir: &str) {
             for contest in &election.contests {
                 let office = ec.offices.get(&contest.office).unwrap();
                 eprintln!("Office: {}", office.name.red());
-                // Figure out if we need to generate report at all.
 
-                // Figure out if we need to preprocess.
                 let output_base = report_path
                     .join(&ec.path)
                     .join(&election_path)
                     .join(&contest.office);
+
+                let report_path = output_base.join("report.json");
+                if report_path.exists() {
+                    eprintln!("Skipping because {} exists.", report_path.to_str().unwrap().bright_cyan());
+                    continue;
+                }
+
                 create_dir_all(&output_base).unwrap();
                 let preprocessed_path = output_base.join("normalized.json.gz");
 
-                let preprocessed =
-                    preprocess_election(&raw_base, election, election_path, &ec, contest);
-
-                let report_path = output_base.join("report.json");
-
-                write_serialized(&preprocessed_path, &preprocessed);
+                let preprocessed: ElectionPreprocessed = if preprocessed_path.exists() {
+                    eprintln!("Loading preprocessed {}.", preprocessed_path.to_str().unwrap().bright_cyan());
+                    read_serialized(&preprocessed_path)
+                } else {
+                    eprintln!("Generating preprocessed {}.", preprocessed_path.to_str().unwrap().bright_cyan());
+                    let preprocessed =
+                        preprocess_election(&raw_base, election, election_path, &ec, contest);
+                    write_serialized(&preprocessed_path, &preprocessed);
+                    preprocessed
+                };
 
                 let contest_report = generate_report(&preprocessed);
 
