@@ -18,7 +18,23 @@ pub struct Session {
     pub record_id: u32,
     counting_group_id: u32,
     image_mask: String,
-    pub original: SessionOriginal,
+    original: SessionOriginal,
+}
+
+impl Session {
+    pub fn contests(&self) -> Vec<ContestMarks> {
+        match &self.original.contests {
+            Some(c) => (*c).clone(),
+            None => self
+                .original
+                .cards
+                .as_ref()
+                .unwrap()
+                .iter()
+                .flat_map(|card| card.contests.clone())
+                .collect(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -27,17 +43,26 @@ pub struct SessionOriginal {
     precinct_portion_id: u32,
     ballot_type_id: u32,
     is_current: bool,
-    pub contests: Vec<ContestMarks>,
+    contests: Option<Vec<ContestMarks>>,
+    cards: Option<Vec<Card>>,
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Card {
+    id: u32,
+    paper_index: u32,
+    contests: Vec<ContestMarks>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "PascalCase")]
 pub struct ContestMarks {
     pub id: u32,
     pub marks: Vec<Mark>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "PascalCase")]
 pub struct Mark {
     pub candidate_id: u32,
@@ -61,7 +86,7 @@ pub struct CandidateManifest {
 pub enum CandidateType {
     WriteIn,
     Regular,
-    QualifiedWriteIn
+    QualifiedWriteIn,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -71,8 +96,8 @@ pub struct Candidate {
     pub id: u32,
     external_id: Option<String>,
     pub contest_id: u32,
-    
-    #[serde(rename = "Type")] 
+
+    #[serde(rename = "Type")]
     pub candidate_type: CandidateType,
 }
 

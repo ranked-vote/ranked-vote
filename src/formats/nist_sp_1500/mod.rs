@@ -55,8 +55,7 @@ fn get_ballots(cvr: &CvrExport, contest_id: u32, map: &CandidateMap) -> Vec<Ball
     let mut ballots: Vec<Ballot> = Vec::new();
 
     for session in &cvr.sessions {
-        let session_original = &session.original;
-        for contest in &session_original.contests {
+        for contest in &session.contests() {
             if contest.id == contest_id {
                 let mut choices: Vec<Choice> = Vec::new();
                 for mark in &contest.marks {

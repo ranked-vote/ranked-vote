@@ -5,6 +5,7 @@ mod normalizers;
 mod read_metadata;
 mod report;
 mod util;
+mod tabulator;
 
 use crate::commands::info::info;
 use crate::commands::report::report;
