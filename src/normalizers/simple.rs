@@ -1,4 +1,4 @@
-use crate::model::election::{Ballot, Choice};
+use crate::model::election::{Ballot, Choice, CandidateId};
 use std::collections::BTreeSet;
 
 pub fn simple_normalizer(ballot: Ballot) -> Ballot {
@@ -48,9 +48,9 @@ mod tests {
 
     #[test]
     fn test_pass_through() {
-        let c1 = Choice::Vote(1);
-        let c2 = Choice::Vote(2);
-        let c3 = Choice::Vote(3);
+        let c1 = Choice::Vote(CandidateId(1));
+        let c2 = Choice::Vote(CandidateId(2));
+        let c3 = Choice::Vote(CandidateId(3));
         let b = Ballot::new("1".into(), vec![c1, c2, c3]);
 
         assert_eq!(
@@ -61,8 +61,8 @@ mod tests {
 
     #[test]
     fn test_remove_duplicate() {
-        let c1 = Choice::Vote(1);
-        let c2 = Choice::Vote(2);
+        let c1 = Choice::Vote(CandidateId(1));
+        let c2 = Choice::Vote(CandidateId(2));
         let b = Ballot::new("1".into(), vec![c1, c2, c1]);
 
         assert_eq!(
@@ -73,7 +73,7 @@ mod tests {
 
     #[test]
     fn test_remove_multiple() {
-        let c1 = Choice::Vote(1);
+        let c1 = Choice::Vote(CandidateId(1));
         let b = Ballot::new("1".into(), vec![c1, c1, c1, c1]);
 
         assert_eq!(
@@ -84,8 +84,8 @@ mod tests {
 
     #[test]
     fn test_undervote() {
-        let c1 = Choice::Vote(1);
-        let c2 = Choice::Vote(2);
+        let c1 = Choice::Vote(CandidateId(1));
+        let c2 = Choice::Vote(CandidateId(2));
         let b = Ballot::new("1".into(), vec![c1, Choice::Undervote, c2]);
 
         assert_eq!(
@@ -96,8 +96,8 @@ mod tests {
 
     #[test]
     fn test_overvote() {
-        let c1 = Choice::Vote(1);
-        let c2 = Choice::Vote(2);
+        let c1 = Choice::Vote(CandidateId(1));
+        let c2 = Choice::Vote(CandidateId(2));
         let b = Ballot::new("1".into(), vec![c1, Choice::Overvote, c2]);
 
         assert_eq!(
@@ -108,8 +108,8 @@ mod tests {
 
     #[test]
     fn test_writein() {
-        let c1 = Choice::Vote(1);
-        let c2 = Choice::Vote(2);
+        let c1 = Choice::Vote(CandidateId(1));
+        let c2 = Choice::Vote(CandidateId(2));
         let b = Ballot::new(
             "1".into(),
             vec![c1, c2, Choice::WriteIn, c2, Choice::WriteIn],

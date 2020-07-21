@@ -1,16 +1,17 @@
-use crate::model::election::{Candidate, Choice};
+use crate::model::election::{Candidate, Choice, CandidateId};
 use std::collections::HashMap;
+use std::hash::Hash;
 
 #[derive(Debug)]
-pub struct CandidateMap {
+pub struct CandidateMap<ExternalCandidateId: Eq + Hash> {
     /// Mapping from external candidate numbers to our candidate numbers.
-    id_to_index: HashMap<u32, u32>,
+    id_to_index: HashMap<ExternalCandidateId, CandidateId>,
     candidates: Vec<Candidate>,
-    write_in: Option<u32>,
+    write_in: Option<ExternalCandidateId>,
 }
 
-impl CandidateMap {
-    pub fn new() -> CandidateMap {
+impl<ExternalCandidateId: Eq + Hash> CandidateMap<ExternalCandidateId> {
+    pub fn new() -> CandidateMap<ExternalCandidateId> {
         CandidateMap {
             id_to_index: HashMap::new(),
             candidates: Vec::new(),
@@ -18,23 +19,23 @@ impl CandidateMap {
         }
     }
 
-    pub fn set_write_in(&mut self, value: u32) {
-        self.write_in = Some(value)
+    pub fn set_write_in(&mut self, external_candidate_id: ExternalCandidateId) {
+        self.write_in = Some(external_candidate_id)
     }
 
-    pub fn add(&mut self, candidate_id: u32, candidate: Candidate) {
+    pub fn add(&mut self, external_candidate_id: ExternalCandidateId, candidate: Candidate) {
         self.id_to_index
-            .insert(candidate_id, self.candidates.len() as u32);
+            .insert(external_candidate_id, CandidateId(self.candidates.len() as u32));
         self.candidates.push(candidate);
     }
 
-    pub fn id_to_choice(&self, candidate_id: u32) -> Choice {
-        if Some(candidate_id) == self.write_in {
+    pub fn id_to_choice(&self, external_candidate_id: ExternalCandidateId) -> Choice {
+        if Some(&external_candidate_id) == self.write_in.as_ref() {
             Choice::WriteIn
         } else {
             let index = self
                 .id_to_index
-                .get(&candidate_id)
+                .get(&external_candidate_id)
                 .expect("Candidate on ballot but not in master lookup.");
 
             Choice::Vote(*index)

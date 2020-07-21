@@ -68,7 +68,7 @@ impl BallotRecord {
     }
 }
 
-fn read_candidates(reader: &mut dyn BufRead, contest_id: u32) -> CandidateMap {
+fn read_candidates(reader: &mut dyn BufRead, contest_id: u32) -> CandidateMap<u32> {
     let mut candidates = CandidateMap::new();
     for line in reader.lines() {
         let line = line.unwrap();
@@ -99,7 +99,7 @@ fn read_candidates(reader: &mut dyn BufRead, contest_id: u32) -> CandidateMap {
 
 fn read_ballots<'a>(
     reader: &mut dyn BufRead,
-    candidates: &CandidateMap,
+    candidates: &CandidateMap<u32>,
     contest: u32,
 ) -> Vec<Ballot> {
     let mut ballots = Vec::new();

@@ -29,7 +29,7 @@ impl ReaderOptions {
     }
 }
 
-fn get_candidates(manifest: &CandidateManifest, contest_id: u32) -> CandidateMap {
+fn get_candidates(manifest: &CandidateManifest, contest_id: u32) -> CandidateMap<u32> {
     let mut map = CandidateMap::new();
 
     for candidate in &manifest.list {
@@ -51,7 +51,7 @@ fn get_candidates(manifest: &CandidateManifest, contest_id: u32) -> CandidateMap
     map
 }
 
-fn get_ballots(cvr: &CvrExport, contest_id: u32, map: &CandidateMap) -> Vec<Ballot> {
+fn get_ballots(cvr: &CvrExport, contest_id: u32, map: &CandidateMap<u32>) -> Vec<Ballot> {
     let mut ballots: Vec<Ballot> = Vec::new();
 
     for session in &cvr.sessions {

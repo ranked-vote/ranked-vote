@@ -1,6 +1,10 @@
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::BTreeMap;
+
+#[derive(Clone, Copy, Debug, PartialEq, Ord, PartialOrd, Eq, Hash)]
+pub struct CandidateId(pub u32);
+
 #[derive(Ord, PartialOrd, Eq, PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub struct Candidate {
     name: String,
@@ -13,9 +17,9 @@ impl Candidate {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Ord, PartialOrd, Eq)]
 pub enum Choice {
-    Vote(u32),
+    Vote(CandidateId),
     Undervote,
     Overvote,
     WriteIn,
@@ -34,7 +38,7 @@ impl<'de> Visitor<'de> for ChoiceVisitor {
     where
         E: de::Error,
     {
-        Ok(Choice::Vote(v as u32))
+        Ok(Choice::Vote(CandidateId(v as u32)))
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
@@ -56,7 +60,7 @@ impl Serialize for Choice {
         S: Serializer,
     {
         match self {
-            Choice::Vote(v) => serializer.serialize_u32(*v),
+            Choice::Vote(CandidateId(v)) => serializer.serialize_u32(*v),
             Choice::Undervote => serializer.serialize_char('U'),
             Choice::Overvote => serializer.serialize_char('O'),
             Choice::WriteIn => serializer.serialize_char('W'),
