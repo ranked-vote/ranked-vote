@@ -88,7 +88,7 @@ pub fn btv_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Elect
 
     Election {
         candidates,
-        ballots
+        ballots,
     }
 }
 
