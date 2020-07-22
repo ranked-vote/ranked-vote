@@ -105,7 +105,6 @@ impl TabulatorState {
             match choice {
                 Choice::Undervote => exhausted += count,
                 Choice::Overvote => exhausted += count,
-                //Choice::WriteIn => unimplemented!(),
                 Choice::Vote(c) => {
                     alloc.insert(*c, count);
                 }

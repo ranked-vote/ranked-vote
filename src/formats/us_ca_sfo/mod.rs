@@ -8,7 +8,6 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 const CANDIDATE: &str = "Candidate";
-const WRITE_IN: &str = "WRITE-IN";
 const WRITE_IN_PREFIX: &str = "WRITE-IN ";
 
 #[derive(Debug)]

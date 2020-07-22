@@ -17,11 +17,6 @@ pub fn simple_normalizer(ballot: Ballot) -> Ballot {
                     new_choices.push(Choice::Vote(v));
                 }
             }
-            /*
-            Choice::WriteIn => {
-                new_choices.push(Choice::WriteIn);
-            }
-            */
             Choice::Undervote => {
                 undervote = true;
             }

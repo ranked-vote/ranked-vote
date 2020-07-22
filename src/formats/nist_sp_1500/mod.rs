@@ -43,19 +43,6 @@ fn get_candidates(manifest: &CandidateManifest, contest_id: u32) -> CandidateMap
                 candidate.id,
                 Candidate::new(candidate.description.clone(), write_in),
             );
-            /*
-            match candidate.candidate_type {
-                CandidateType::WriteIn => map.set_write_in(candidate.id),
-                CandidateType::QualifiedWriteIn => map.add(
-                    candidate.id,
-                    Candidate::new(candidate.description.clone(), true),
-                ),
-                CandidateType::Regular => map.add(
-                    candidate.id,
-                    Candidate::new(candidate.description.clone(), false),
-                ),
-            }
-            */
         }
     }
 

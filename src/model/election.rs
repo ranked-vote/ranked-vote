@@ -57,7 +57,6 @@ pub enum Choice {
     Vote(CandidateId),
     Undervote,
     Overvote,
-    //WriteIn,
 }
 
 struct ChoiceVisitor;
@@ -83,7 +82,6 @@ impl<'de> Visitor<'de> for ChoiceVisitor {
         match v {
             "U" => Ok(Choice::Undervote),
             "O" => Ok(Choice::Overvote),
-            //"W" => Ok(Choice::WriteIn),
             _ => Err(de::Error::custom("Expected U, O, or W if char.")),
         }
     }
@@ -98,7 +96,6 @@ impl Serialize for Choice {
             Choice::Vote(CandidateId(v)) => serializer.serialize_u32(*v),
             Choice::Undervote => serializer.serialize_char('U'),
             Choice::Overvote => serializer.serialize_char('O'),
-            //Choice::WriteIn => serializer.serialize_char('W'),
         }
     }
 }
