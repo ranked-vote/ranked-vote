@@ -1,3 +1,4 @@
+use crate::formats::util::CandidateMap;
 use crate::model::election::{Ballot, Candidate, Choice, Election};
 use crate::util::string::UnicodeString;
 use itertools::Itertools;
@@ -5,7 +6,6 @@ use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use crate::formats::util::CandidateMap;
 
 const CANDIDATE: &str = "Candidate";
 const WRITE_IN: &str = "WRITE-IN";
@@ -80,10 +80,12 @@ fn read_candidates(reader: &mut dyn BufRead, contest_id: u32) -> CandidateMap<u3
             }
             let name = record.description;
 
+            /*
             if name == WRITE_IN {
                 candidates.set_write_in(record.record_id);
                 continue;
             }
+            */
 
             let candidate = if name.starts_with(WRITE_IN_PREFIX) {
                 let name = name[(WRITE_IN_PREFIX.len())..].to_string();
@@ -160,7 +162,7 @@ impl ReaderOptions {
             contest,
             master_file,
             ballot_file,
-            zip_file
+            zip_file,
         }
     }
 }
@@ -174,7 +176,7 @@ pub fn sfo_ballot_reader<'a>(path: &Path, params: BTreeMap<String, String>) -> E
         let candidates = {
             let master = archive.by_name(&options.master_file).unwrap();
             let mut master_reader = BufReader::new(master);
-            read_candidates(&mut master_reader, options.contest)    
+            read_candidates(&mut master_reader, options.contest)
         };
 
         let ballots = {
@@ -187,11 +189,11 @@ pub fn sfo_ballot_reader<'a>(path: &Path, params: BTreeMap<String, String>) -> E
     } else {
         let mut master_reader = BufReader::new(File::open(path.join(options.master_file)).unwrap());
         let mut candidates = read_candidates(&mut master_reader, options.contest);
-    
+
         let mut ballot_reader = BufReader::new(File::open(path.join(options.ballot_file)).unwrap());
         let ballots = read_ballots(&mut ballot_reader, &mut candidates, options.contest);
-        (candidates, ballots)    
+        (candidates, ballots)
     };
-    
+
     Election::new(candidates.to_vec(), ballots)
 }

@@ -1,4 +1,4 @@
-use crate::model::election::{Ballot, Choice, CandidateId};
+use crate::model::election::{Ballot, Choice};
 use std::collections::BTreeSet;
 
 pub fn simple_normalizer(ballot: Ballot) -> Ballot {
@@ -17,9 +17,11 @@ pub fn simple_normalizer(ballot: Ballot) -> Ballot {
                     new_choices.push(Choice::Vote(v));
                 }
             }
+            /*
             Choice::WriteIn => {
                 new_choices.push(Choice::WriteIn);
             }
+            */
             Choice::Undervote => {
                 undervote = true;
             }
@@ -44,7 +46,7 @@ pub fn simple_normalizer(ballot: Ballot) -> Ballot {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::election::Choice;
+    use crate::model::election::{CandidateId, Choice};
 
     #[test]
     fn test_pass_through() {
@@ -106,6 +108,7 @@ mod tests {
         );
     }
 
+    /*
     #[test]
     fn test_writein() {
         let c1 = Choice::Vote(CandidateId(1));
@@ -123,4 +126,5 @@ mod tests {
             simple_normalizer(b)
         );
     }
+    */
 }

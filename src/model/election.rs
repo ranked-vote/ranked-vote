@@ -5,6 +5,41 @@ use std::collections::BTreeMap;
 #[derive(Clone, Copy, Debug, PartialEq, Ord, PartialOrd, Eq, Hash)]
 pub struct CandidateId(pub u32);
 
+struct CandidateIdVisitor;
+
+impl<'de> Visitor<'de> for CandidateIdVisitor {
+    type Value = CandidateId;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("an unsigned integer")
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(CandidateId(v as u32))
+    }
+}
+
+impl Serialize for CandidateId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u32(self.0)
+    }
+}
+
+impl<'de> Deserialize<'de> for CandidateId {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_u64(CandidateIdVisitor)
+    }
+}
+
 #[derive(Ord, PartialOrd, Eq, PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub struct Candidate {
     name: String,
@@ -22,7 +57,7 @@ pub enum Choice {
     Vote(CandidateId),
     Undervote,
     Overvote,
-    WriteIn,
+    //WriteIn,
 }
 
 struct ChoiceVisitor;
@@ -48,7 +83,7 @@ impl<'de> Visitor<'de> for ChoiceVisitor {
         match v {
             "U" => Ok(Choice::Undervote),
             "O" => Ok(Choice::Overvote),
-            "W" => Ok(Choice::WriteIn),
+            //"W" => Ok(Choice::WriteIn),
             _ => Err(de::Error::custom("Expected U, O, or W if char.")),
         }
     }
@@ -63,7 +98,7 @@ impl Serialize for Choice {
             Choice::Vote(CandidateId(v)) => serializer.serialize_u32(*v),
             Choice::Undervote => serializer.serialize_char('U'),
             Choice::Overvote => serializer.serialize_char('O'),
-            Choice::WriteIn => serializer.serialize_char('W'),
+            //Choice::WriteIn => serializer.serialize_char('W'),
         }
     }
 }

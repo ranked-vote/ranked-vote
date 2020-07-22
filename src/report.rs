@@ -1,14 +1,19 @@
 use crate::formats::read_election;
-use crate::model::election::{ElectionPreprocessed,ElectionInfo};
-use crate::model::metadata::{ElectionMetadata, Contest, ElectionCommission};
+use crate::model::election::{ElectionInfo, ElectionPreprocessed};
+use crate::model::metadata::{Contest, ElectionCommission, ElectionMetadata};
 use crate::model::report::ContestReport;
-use std::path::Path;
 use crate::normalizers::normalize_election;
+use crate::tabulator::tabulate;
+use std::path::Path;
 
 pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
+    let rounds = tabulate(&election.ballots.ballots);
+
     ContestReport {
         info: election.info.clone(),
         ballot_count: election.ballots.ballots.len() as u32,
+        candidates: election.ballots.candidates.clone(),
+        rounds,
     }
 }
 
@@ -17,7 +22,7 @@ pub fn preprocess_election(
     metadata: &ElectionMetadata,
     election_path: &str,
     ec: &ElectionCommission,
-    contest: &Contest
+    contest: &Contest,
 ) -> ElectionPreprocessed {
     let mut ballots = read_election(
         &metadata.data_format,

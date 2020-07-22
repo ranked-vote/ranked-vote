@@ -1,33 +1,46 @@
-use serde::{Deserialize, Serialize};
+use crate::model::election::CandidateId;
+use serde::{Serialize, Serializer};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TabulatorRound {
-    allocations: Vec<TabulatorAllocation>,
-    undervote: u32,
-    overvote: u32,
-    continuing_ballots: u32,
-    eliminated: Vec<u32>,
+    pub allocations: Vec<TabulatorAllocation>,
+    pub undervote: u32,
+    pub overvote: u32,
+    pub continuing_ballots: u32,
+    pub transfers: Vec<Transfer>,
+    //eliminated: Vec<u32>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TabulatorAllocation {
-    allocatee: Allocatee,
-    votes: u32,
+    pub allocatee: Allocatee,
+    pub votes: u32,
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Hash, Eq, PartialEq)]
 pub enum Allocatee {
-    Candidate(u32),
+    Candidate(CandidateId),
     Exhausted,
 }
 
-#[derive(Serialize, Deserialize)]
+impl Serialize for Allocatee {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Allocatee::Candidate(CandidateId(c)) => serializer.serialize_u32(*c),
+            Allocatee::Exhausted => serializer.serialize_str("X"),
+        }
+    }
+}
+
+#[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Transfer {
-    from: u32,
-    to: u32,
-    count: u32
+    pub from: CandidateId,
+    pub to: Allocatee,
+    pub count: u32,
 }

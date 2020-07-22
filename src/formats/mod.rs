@@ -1,5 +1,5 @@
-mod us_ca_sfo;
 mod nist_sp_1500;
+mod us_ca_sfo;
 mod util;
 
 use crate::model::election::Election;

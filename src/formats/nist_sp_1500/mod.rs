@@ -34,6 +34,16 @@ fn get_candidates(manifest: &CandidateManifest, contest_id: u32) -> CandidateMap
 
     for candidate in &manifest.list {
         if candidate.contest_id == contest_id {
+            let write_in = match candidate.candidate_type {
+                CandidateType::WriteIn => true,
+                CandidateType::QualifiedWriteIn => true,
+                _ => false,
+            };
+            map.add(
+                candidate.id,
+                Candidate::new(candidate.description.clone(), write_in),
+            );
+            /*
             match candidate.candidate_type {
                 CandidateType::WriteIn => map.set_write_in(candidate.id),
                 CandidateType::QualifiedWriteIn => map.add(
@@ -45,6 +55,7 @@ fn get_candidates(manifest: &CandidateManifest, contest_id: u32) -> CandidateMap
                     Candidate::new(candidate.description.clone(), false),
                 ),
             }
+            */
         }
     }
 

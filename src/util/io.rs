@@ -1,13 +1,13 @@
 use colored::*;
-use flate2::{write::GzEncoder, read::GzDecoder, Compression};
+use flate2::{read::GzDecoder, write::GzEncoder, Compression};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::ffi::OsString;
 use std::fs::File;
 use std::fs::OpenOptions;
+use std::io::Read;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
-use std::io::Read;
 
 pub fn read_serialized<T: DeserializeOwned>(path: &Path) -> T {
     eprintln!("Reading {}", path.to_str().unwrap().bright_blue());
