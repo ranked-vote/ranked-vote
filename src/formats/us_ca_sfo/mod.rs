@@ -166,7 +166,7 @@ impl ReaderOptions {
     }
 }
 
-pub fn sfo_ballot_reader<'a>(path: &Path, params: BTreeMap<String, String>) -> Election {
+pub fn sfo_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Election {
     let options = ReaderOptions::from_params(params);
 
     let (candidates, ballots) = if let Some(zip_file) = options.zip_file {

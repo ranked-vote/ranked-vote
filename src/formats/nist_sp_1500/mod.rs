@@ -73,7 +73,7 @@ fn get_ballots(cvr: &CvrExport, contest_id: u32, map: &CandidateMap<u32>) -> Vec
     ballots
 }
 
-pub fn nist_ballot_reader<'a>(path: &Path, params: BTreeMap<String, String>) -> Election {
+pub fn nist_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Election {
     let options = ReaderOptions::from_params(params);
 
     let file = File::open(path.join(&options.cvr)).unwrap();
