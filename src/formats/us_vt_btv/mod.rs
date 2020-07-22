@@ -1,7 +1,4 @@
-use crate::formats::util::CandidateMap;
 use crate::model::election::{Ballot, Candidate, CandidateId, Choice, Election};
-use crate::util::string::UnicodeString;
-use itertools::Itertools;
 use regex::Regex;
 use std::collections::BTreeMap;
 use std::fs::File;
