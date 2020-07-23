@@ -3,13 +3,13 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 #[derive(Debug)]
-pub struct CandidateMap<ExternalCandidateId: Eq + Hash> {
+pub struct CandidateMap<ExternalCandidateId: Eq + Hash + Clone> {
     /// Mapping from external candidate numbers to our candidate numbers.
     id_to_index: HashMap<ExternalCandidateId, CandidateId>,
     candidates: Vec<Candidate>,
 }
 
-impl<ExternalCandidateId: Eq + Hash> CandidateMap<ExternalCandidateId> {
+impl<ExternalCandidateId: Eq + Hash + Clone> CandidateMap<ExternalCandidateId> {
     pub fn new() -> CandidateMap<ExternalCandidateId> {
         CandidateMap {
             id_to_index: HashMap::new(),
@@ -23,6 +23,14 @@ impl<ExternalCandidateId: Eq + Hash> CandidateMap<ExternalCandidateId> {
             CandidateId(self.candidates.len() as u32),
         );
         self.candidates.push(candidate);
+    }
+
+    pub fn add_id_to_choice(&mut self, external_candidate_id: ExternalCandidateId, candidate: Candidate) -> Choice {
+        if !self.id_to_index.contains_key(&external_candidate_id) {
+            self.add(external_candidate_id.clone(), candidate);
+        }
+
+        self.id_to_choice(external_candidate_id)
     }
 
     pub fn id_to_choice(&self, external_candidate_id: ExternalCandidateId) -> Choice {

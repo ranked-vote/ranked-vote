@@ -102,24 +102,4 @@ mod tests {
             simple_normalizer(b)
         );
     }
-
-    /*
-    #[test]
-    fn test_writein() {
-        let c1 = Choice::Vote(CandidateId(1));
-        let c2 = Choice::Vote(CandidateId(2));
-        let b = Ballot::new(
-            "1".into(),
-            vec![c1, c2, Choice::WriteIn, c2, Choice::WriteIn],
-        );
-
-        assert_eq!(
-            Ballot::new(
-                "1".into(),
-                vec![c1, c2, Choice::WriteIn, Choice::WriteIn, Choice::Undervote]
-            ),
-            simple_normalizer(b)
-        );
-    }
-    */
 }

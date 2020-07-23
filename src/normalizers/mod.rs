@@ -1,13 +1,14 @@
 pub mod simple;
+pub mod maine;
 
 use crate::model::election::{Ballot, Election};
-use crate::normalizers::simple::simple_normalizer;
 
 pub type BallotNormalizer = dyn Fn(Ballot) -> Ballot;
 
 pub fn get_normalizer_for_format(format: &str) -> &'static BallotNormalizer {
     match format {
-        "simple" => &simple_normalizer,
+        "simple" => &simple::simple_normalizer,
+        "maine" => &maine::maine_normalizer,
         _ => panic!("The normalizer {} is not implemented.", format),
     }
 }

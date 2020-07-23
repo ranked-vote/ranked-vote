@@ -119,56 +119,85 @@ impl TabulatorState {
 
     pub fn do_elimination(mut self) -> TabulatorState {
         let votes = self.allocations();
-        assert!(votes.votes.len() > 2);
-        let (to_eliminate, _) = votes.votes.last().unwrap();
-        self.eliminated.insert(*to_eliminate);
-        let mut transfers: HashMap<Allocatee, u32> = HashMap::new();
 
-        let ballots = self
-            .allocations
-            .remove(&Choice::Vote(*to_eliminate))
-            .unwrap();
+        // Determine how many eliminations to do.
+        //assert!(votes.votes.len() > 2);
+        let candidates_to_eliminate = {
+            let mut candidates = votes.votes;
+            let mut eliminate: Vec<CandidateId> = Vec::new();
 
-        for mut ballot in ballots {
-            // TODO: this is O(n)
+            let mut total_eliminated = 0;
             loop {
-                ballot.remove(0);
-                if let Some(Choice::Vote(c)) = ballot.first() {
-                    if !self.eliminated.contains(c) {
+                match candidates.as_slice() {
+                    [.., (_, c1), (_, c2)] => {
+                        if total_eliminated + *c2 > *c1 {
+                            break;
+                        }
+                    }
+                    _ => break,
+                }
+
+                let (cid, c) = candidates.pop().unwrap();
+                eliminate.push(cid);
+                total_eliminated += c;
+            }
+
+            assert!(eliminate.len() >= 1);
+            eliminate
+        };
+
+        let mut transfers: Vec<Transfer> = Vec::new();
+        self.eliminated.extend(candidates_to_eliminate.iter());
+
+        let mut bb = self.allocations;
+
+        for to_eliminate in &candidates_to_eliminate {
+            let mut transfer_map: HashMap<Allocatee, u32> = HashMap::new();
+
+            let ballots = bb.remove(&Choice::Vote(*to_eliminate)).unwrap();
+
+            for mut ballot in ballots {
+                // TODO: this is O(n)
+                loop {
+                    ballot.remove(0);
+                    if let Some(Choice::Vote(c)) = ballot.first() {
+                        if !self.eliminated.contains(c) {
+                            break;
+                        }
+                    } else {
                         break;
                     }
+                }
+
+                let new_choice = if let Some(c) = ballot.get(0) {
+                    c
                 } else {
-                    break;
+                    &Choice::Undervote
+                };
+
+                bb
+                    .entry(*new_choice)
+                    .or_insert_with(|| Vec::new())
+                    .push(ballot.clone());
+
+                match new_choice {
+                    Choice::Vote(v) => {
+                        *transfer_map.entry(Allocatee::Candidate(*v)).or_default() += 1
+                    }
+                    _ => *transfer_map.entry(Allocatee::Exhausted).or_default() += 1,
                 }
             }
-
-            let new_choice = if let Some(c) = ballot.get(0) {
-                c
-            } else {
-                &Choice::Undervote
-            };
-
-            self.allocations
-                .entry(*new_choice)
-                .or_insert_with(|| Vec::new())
-                .push(ballot.clone());
-
-            match new_choice {
-                Choice::Vote(v) => *transfers.entry(Allocatee::Candidate(*v)).or_default() += 1,
-                _ => *transfers.entry(Allocatee::Exhausted).or_default() += 1,
-            }
+            
+            transfers.append(&mut transfer_map.into_iter().map(|(a, count)| Transfer {
+                from: *to_eliminate,
+                to: a,
+                count,
+            }).collect());
         }
 
         TabulatorState {
-            allocations: self.allocations,
-            transfers: transfers
-                .into_iter()
-                .map(|(a, count)| Transfer {
-                    from: *to_eliminate,
-                    to: a,
-                    count,
-                })
-                .collect(),
+            allocations: bb,
+            transfers,
             eliminated: self.eliminated,
         }
     }
