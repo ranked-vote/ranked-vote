@@ -175,8 +175,7 @@ impl TabulatorState {
                     &Choice::Undervote
                 };
 
-                bb
-                    .entry(*new_choice)
+                bb.entry(*new_choice)
                     .or_insert_with(|| Vec::new())
                     .push(ballot.clone());
 
@@ -187,12 +186,17 @@ impl TabulatorState {
                     _ => *transfer_map.entry(Allocatee::Exhausted).or_default() += 1,
                 }
             }
-            
-            transfers.append(&mut transfer_map.into_iter().map(|(a, count)| Transfer {
-                from: *to_eliminate,
-                to: a,
-                count,
-            }).collect());
+
+            transfers.append(
+                &mut transfer_map
+                    .into_iter()
+                    .map(|(a, count)| Transfer {
+                        from: *to_eliminate,
+                        to: a,
+                        count,
+                    })
+                    .collect(),
+            );
         }
 
         TabulatorState {

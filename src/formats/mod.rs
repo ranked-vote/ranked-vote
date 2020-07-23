@@ -1,8 +1,8 @@
 mod dominion_rcr;
 mod nist_sp_1500;
 mod us_ca_sfo;
-mod us_vt_btv;
 mod us_me;
+mod us_vt_btv;
 mod util;
 
 use crate::model::election::Election;

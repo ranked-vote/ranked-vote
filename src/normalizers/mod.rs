@@ -1,5 +1,5 @@
-pub mod simple;
 pub mod maine;
+pub mod simple;
 
 use crate::model::election::{Ballot, Election};
 

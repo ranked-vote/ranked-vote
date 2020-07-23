@@ -25,7 +25,11 @@ impl<ExternalCandidateId: Eq + Hash + Clone> CandidateMap<ExternalCandidateId> {
         self.candidates.push(candidate);
     }
 
-    pub fn add_id_to_choice(&mut self, external_candidate_id: ExternalCandidateId, candidate: Candidate) -> Choice {
+    pub fn add_id_to_choice(
+        &mut self,
+        external_candidate_id: ExternalCandidateId,
+        candidate: Candidate,
+    ) -> Choice {
         if !self.id_to_index.contains_key(&external_candidate_id) {
             self.add(external_candidate_id.clone(), candidate);
         }
