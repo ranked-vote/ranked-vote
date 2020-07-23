@@ -79,13 +79,6 @@ fn read_candidates(reader: &mut dyn BufRead, contest_id: u32) -> CandidateMap<u3
             }
             let name = record.description;
 
-            /*
-            if name == WRITE_IN {
-                candidates.set_write_in(record.record_id);
-                continue;
-            }
-            */
-
             let candidate = if name.starts_with(WRITE_IN_PREFIX) {
                 let name = name[(WRITE_IN_PREFIX.len())..].to_string();
                 Candidate::new(name, true)
