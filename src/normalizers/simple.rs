@@ -2,6 +2,11 @@ use crate::model::election::{Ballot, Choice, NormalizedBallot};
 use std::collections::BTreeSet;
 
 pub fn simple_normalizer(ballot: Ballot) -> NormalizedBallot {
+    // In most jurisdiction, ranks are considered as follows:
+    // For each ballot, consider the top-ranked candidate who
+    // has not yet been eliminated. If the top-ranked candidate
+    // is ambiguous (i.e. an overvote), consider the ballot
+    // exhausted.
     let mut seen = BTreeSet::new();
     let Ballot { id, choices } = ballot;
     let mut new_choices = Vec::new();

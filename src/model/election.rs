@@ -93,7 +93,7 @@ impl NormalizedBallot {
         self.choices.clone().into()
     }
 
-    pub fn next(&self) -> Choice {
+    pub fn top_vote(&self) -> Choice {
         match self.choices.front() {
             Some(v) => Choice::Vote(*v),
             None => {
@@ -106,7 +106,7 @@ impl NormalizedBallot {
         }
     }
 
-    pub fn pop(mut self) -> Self {
+    pub fn pop_top_vote(mut self) -> Self {
         self.choices.pop_front();
         self
     }

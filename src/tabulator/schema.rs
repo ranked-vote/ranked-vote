@@ -1,4 +1,4 @@
-use crate::model::election::CandidateId;
+use crate::model::election::{CandidateId, Choice};
 use serde::{Serialize, Serializer};
 
 #[derive(Serialize)]
@@ -23,6 +23,15 @@ pub struct TabulatorAllocation {
 pub enum Allocatee {
     Candidate(CandidateId),
     Exhausted,
+}
+
+impl Allocatee {
+    pub fn from_choice(c: Choice) -> Allocatee {
+        match c {
+            Choice::Vote(v) => Allocatee::Candidate(v),
+            _ => Allocatee::Exhausted
+        }
+    }
 }
 
 impl Serialize for Allocatee {

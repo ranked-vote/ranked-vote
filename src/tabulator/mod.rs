@@ -4,27 +4,33 @@ use crate::model::election::{CandidateId, Choice, NormalizedBallot};
 pub use crate::tabulator::schema::{Allocatee, TabulatorAllocation, TabulatorRound, Transfer};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 
+/// Represents the number of ballots considered to be allocated to
+/// each candidate at a particular stage of tabulation.
 struct Allocations {
     exhausted: u32,
     votes: Vec<(CandidateId, u32)>,
 }
 
 impl Allocations {
+    pub fn new(mut votes: Vec<(CandidateId, u32)>, exhausted: u32) -> Allocations {
+        // Sort descending by number of votes.
+        votes.sort_by(|a, b| (b.1).cmp(&a.1));
+
+        Allocations { votes, exhausted }
+    }
+
+    /// Returns true if a winner can be declared from this allocation.
     pub fn is_final(&self) -> bool {
-        match self.votes.as_slice() {
-            // Three or more candidates. The allocation is final if
-            // the first-place candidate beats the second-place candidate
-            // by a margin of more than the number of continuing ballots.
-            [(_, first_votes), (_, second_votes), ..] => {
-                let rest = &self.votes[2..];
-                let rest_votes: u32 = rest.iter().map(|(_, v)| v).sum();
-                first_votes - second_votes > rest_votes
+        match self.votes.first() {
+            Some((_, first_votes)) => {
+                let rest_votes = self.continuing() - first_votes;
+                *first_votes > rest_votes
             }
-            // If two or fewer candidates remain, we know it is final.
-            _ => true,
+            _ => panic!("The contest should have at least one candidate."),
         }
     }
 
+    /// Turn into a `TabulatorAllocation` vector.
     pub fn to_vec(self) -> Vec<TabulatorAllocation> {
         let mut v = Vec::with_capacity(self.votes.len() + 1);
         for (id, votes) in self.votes {
@@ -40,27 +46,38 @@ impl Allocations {
         v
     }
 
+    /// Return the number of continuing (non-exhausted) ballots in this round's allocation.
     pub fn continuing(&self) -> u32 {
         self.votes.iter().map(|(_, v)| v).sum()
     }
 }
 
 struct TabulatorState {
-    pub allocations: BTreeMap<Choice, Vec<NormalizedBallot>>,
+    /// Map from candidate to ballots attributed to that candidate at this round.
+    /// Eliminated candidates ranking above the top non-eliminated candidate have
+    /// been removed from each ballot.
+    pub candidate_ballots: BTreeMap<Choice, Vec<NormalizedBallot>>,
+
+    /// Transfers incoming from the prior round.
     pub transfers: Vec<Transfer>,
+
+    /// Set of candidates who have already been eliminated prior to this round.
     eliminated: HashSet<CandidateId>,
 }
 
 impl TabulatorState {
+    /// Obtain the `TabulatorRound` representation of a `TabulatorState`.
+    /// The `TabulatorRound` representation is the one that is serialized
+    /// into the report.
     pub fn as_round(&self) -> TabulatorRound {
         let allocations = self.allocations();
         let undervote = self
-            .allocations
+            .candidate_ballots
             .get(&Choice::Undervote)
             .map(|x| x.len() as u32)
             .unwrap_or(0);
         let overvote = self
-            .allocations
+            .candidate_ballots
             .get(&Choice::Overvote)
             .map(|x| x.len() as u32)
             .unwrap_or(0);
@@ -78,23 +95,25 @@ impl TabulatorState {
     pub fn new(ballots: &Vec<NormalizedBallot>) -> TabulatorState {
         let mut allocations: BTreeMap<Choice, Vec<NormalizedBallot>> = BTreeMap::new();
         for ballot in ballots {
-            let choice = ballot.next();
+            let choice = ballot.top_vote();
             allocations
                 .entry(choice)
                 .or_insert_with(|| Vec::new())
                 .push(ballot.clone());
         }
         TabulatorState {
-            allocations,
+            candidate_ballots: allocations,
             transfers: Vec::new(),
             eliminated: HashSet::new(),
         }
     }
 
+    /// Count the ballots attributed to each candidate at this round, as well as the
+    /// number of exhausted ballots.
     pub fn allocations(&self) -> Allocations {
         let mut alloc: BTreeMap<CandidateId, u32> = BTreeMap::new();
         let mut exhausted: u32 = 0;
-        for (choice, ballots) in &self.allocations {
+        for (choice, ballots) in &self.candidate_ballots {
             let count = ballots.len() as u32;
             match choice {
                 Choice::Undervote => exhausted += count,
@@ -105,77 +124,92 @@ impl TabulatorState {
             }
         }
 
-        let mut votes: Vec<(CandidateId, u32)> = alloc.into_iter().collect();
-        votes.sort_by(|a, b| (b.1).cmp(&a.1));
+        let votes: Vec<(CandidateId, u32)> = alloc.into_iter().collect();
 
-        Allocations { votes, exhausted }
+        Allocations::new(votes, exhausted)
     }
 
     pub fn do_elimination(mut self) -> TabulatorState {
-        let votes = self.allocations();
+        let allocations = self.allocations();
 
-        // Determine how many eliminations to do.
-        //assert!(votes.votes.len() > 2);
+        // Determine which candidates to eliminate.
         let candidates_to_eliminate = {
-            let mut candidates = votes.votes;
-            let mut eliminate: Vec<CandidateId> = Vec::new();
+            let mut candidates = allocations.votes;
+            let mut candidates_to_eliminate: Vec<CandidateId> = Vec::new();
 
-            let mut total_eliminated = 0;
+            // The number of ballots that have been "freed up" by the elimination
+            // so far. We stop eliminating candidates when we reach a candidate
+            // for whom the number of freed ballots, if all ranked that candidate
+            // higher than the other remaining candidates, would be enough to
+            // change that candidate's ranking.
+            let mut num_freed_ballots = 0;
+
             loop {
                 match candidates.as_slice() {
-                    [.., (_, c1), (_, c2)] => {
-                        if total_eliminated + *c2 > *c1 {
+                    [.., (_, second_last_candidate_votes), (_, last_candidate_votes)] => {
+                        if num_freed_ballots + *last_candidate_votes > *second_last_candidate_votes
+                        {
                             break;
                         }
                     }
+                    // If less than two candidates remain, we should have a winner.
                     _ => break,
                 }
 
+                // Remove this candidate from the vote allocation list, mark them as eliminated, and
+                // count ballots previously attributed to them as freed.
                 let (cid, c) = candidates.pop().unwrap();
-                eliminate.push(cid);
-                total_eliminated += c;
+                candidates_to_eliminate.push(cid);
+                num_freed_ballots += c;
             }
 
-            assert!(eliminate.len() >= 1);
-            eliminate
+            // This isn't impossible, but indicates a tie or something else weird
+            // that needs manual investigation.
+            assert!(candidates_to_eliminate.len() >= 1);
+            candidates_to_eliminate
         };
 
         let mut transfers: BTreeSet<Transfer> = BTreeSet::new();
-        self.eliminated.extend(candidates_to_eliminate.iter());
+        let mut eliminated = self.eliminated;
+        eliminated.extend(candidates_to_eliminate.iter());
 
-        let mut bb = self.allocations;
+        let mut candidate_ballots = self.candidate_ballots;
 
+        // For each eliminated candidate, re-allocate their votes.
         for to_eliminate in &candidates_to_eliminate {
+            // Keep track of which candidate the eliminated candidate's votes go to,
+            // so that we can keep track of transfers.
             let mut transfer_map: BTreeMap<Allocatee, u32> = BTreeMap::new();
 
-            let ballots = bb.remove(&Choice::Vote(*to_eliminate)).unwrap();
+            let ballots = candidate_ballots
+                .remove(&Choice::Vote(*to_eliminate))
+                .unwrap();
 
             for mut ballot in ballots {
-                loop {
-                    ballot = ballot.pop();
-                    if let Choice::Vote(c) = ballot.next() {
-                        if !self.eliminated.contains(&c) {
-                            break;
+                // Remove the top candidate from the ballot until we find one who has
+                // not been eliminated.
+                let new_choice = loop {
+                    ballot = ballot.pop_top_vote();
+                    let next_choice = ballot.top_vote();
+
+                    if let Choice::Vote(c) = next_choice {
+                        if !eliminated.contains(&c) {
+                            break next_choice;
                         }
                     } else {
-                        break;
+                        break next_choice;
                     }
-                }
+                };
 
-                let new_choice = ballot.next();
-
-                bb.entry(new_choice)
+                candidate_ballots
+                    .entry(new_choice)
                     .or_insert_with(|| Vec::new())
                     .push(ballot.clone());
 
-                match new_choice {
-                    Choice::Vote(v) => {
-                        *transfer_map.entry(Allocatee::Candidate(v)).or_default() += 1
-                    }
-                    _ => *transfer_map.entry(Allocatee::Exhausted).or_default() += 1,
-                }
+                *transfer_map.entry(Allocatee::from_choice(new_choice)).or_default() += 1;
             }
 
+            // Add data about transfers from the eliminated candidate to the transfers list.
             transfers.append(
                 &mut transfer_map
                     .into_iter()
@@ -189,9 +223,9 @@ impl TabulatorState {
         }
 
         TabulatorState {
-            allocations: bb,
+            candidate_ballots,
             transfers: transfers.into_iter().collect(),
-            eliminated: self.eliminated,
+            eliminated,
         }
     }
 }
