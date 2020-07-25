@@ -9,6 +9,8 @@ use std::io::Read;
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
 
+/// Read a JSON-serialized file into an object. Applies GZ decompression
+/// if the file path ends in `.gz`.
 pub fn read_serialized<T: DeserializeOwned>(path: &Path) -> T {
     eprintln!("Reading {}", path.to_str().unwrap().bright_blue());
     let file = File::open(path).unwrap();
@@ -28,6 +30,9 @@ pub fn read_serialized<T: DeserializeOwned>(path: &Path) -> T {
     }
 }
 
+/// Write the given object as JSON. Applies GZ compression if the file
+/// path ends in `.gz`. Creates the file if it doesn't exist, otherwise
+/// overwrites it.
 pub fn write_serialized<T: Serialize>(path: &Path, value: &T) {
     eprintln!("Writing {}", path.to_str().unwrap().bright_blue());
 

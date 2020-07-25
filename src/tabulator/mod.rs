@@ -1,7 +1,7 @@
-pub mod schema;
+mod schema;
 
 use crate::model::election::{CandidateId, Choice, NormalizedBallot};
-use crate::tabulator::schema::{Allocatee, TabulatorAllocation, TabulatorRound, Transfer};
+pub use crate::tabulator::schema::{Allocatee, TabulatorAllocation, TabulatorRound, Transfer};
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 
 struct Allocations {

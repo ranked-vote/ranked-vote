@@ -1,5 +1,5 @@
 use crate::model::election::{Candidate, ElectionInfo};
-use crate::tabulator::schema::TabulatorRound;
+use crate::tabulator::TabulatorRound;
 use serde::Serialize;
 
 #[derive(Serialize)]

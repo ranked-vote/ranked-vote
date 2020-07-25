@@ -1,7 +1,7 @@
 use crate::model::election::ElectionPreprocessed;
 use crate::read_metadata::read_meta;
 use crate::report::{generate_report, preprocess_election};
-use crate::util::io::{read_serialized, write_serialized};
+use crate::util::{read_serialized, write_serialized};
 use colored::*;
 use std::fs::create_dir_all;
 use std::path::Path;

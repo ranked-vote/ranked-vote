@@ -6,6 +6,7 @@ use crate::normalizers::normalize_election;
 use crate::tabulator::tabulate;
 use std::path::Path;
 
+/// Generate a `ContestReport` from preprocessed election data.
 pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
     let rounds = tabulate(&election.ballots.ballots);
 
@@ -17,6 +18,8 @@ pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
     }
 }
 
+/// Preprocess an election by reading and normalizing the raw ballot data according
+/// to the rules given in the metadata for this contest.
 pub fn preprocess_election(
     raw_base: &Path,
     metadata: &ElectionMetadata,

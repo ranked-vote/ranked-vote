@@ -1,9 +1,10 @@
 use crate::model::metadata::Jurisdiction;
-use crate::util::io::read_serialized;
-use crate::util::path::get_files_from_path;
+use crate::util::{get_files_from_path, read_serialized};
 use colored::*;
 use std::path::{Path, PathBuf};
 
+/// Read all metadata files under the given directory (recursively) and return
+/// an iterator over the results.
 pub fn read_meta<'a>(path: &str) -> impl Iterator<Item = (PathBuf, Jurisdiction)> {
     let files = get_files_from_path(Path::new(path)).unwrap();
 

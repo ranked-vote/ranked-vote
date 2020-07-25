@@ -1,11 +1,11 @@
-pub mod maine;
-pub mod simple;
+mod maine;
+mod simple;
 
 use crate::model::election::{Ballot, Election, NormalizedBallot, NormalizedElection};
 
-pub type BallotNormalizer = dyn Fn(Ballot) -> NormalizedBallot;
+type BallotNormalizer = dyn Fn(Ballot) -> NormalizedBallot;
 
-pub fn get_normalizer_for_format(format: &str) -> &'static BallotNormalizer {
+fn get_normalizer_for_format(format: &str) -> &'static BallotNormalizer {
     match format {
         "simple" => &simple::simple_normalizer,
         "maine" => &maine::maine_normalizer,

@@ -1,6 +1,5 @@
 use crate::read_metadata::read_meta;
-use crate::util::hash::hash_file;
-use crate::util::io::write_serialized;
+use crate::util::{hash_file, write_serialized};
 use colored::*;
 use std::collections::HashSet;
 use std::fs;

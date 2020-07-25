@@ -7,11 +7,9 @@ mod report;
 mod tabulator;
 mod util;
 
-use crate::commands::info::info;
-use crate::commands::report::report;
-use crate::commands::sync::sync;
+use crate::commands::{info, report, sync};
 use crate::model::metadata::Jurisdiction;
-use crate::util::path::get_files_from_path;
+use crate::util::get_files_from_path;
 use clap::{App, Arg, SubCommand};
 use colored::*;
 use std::fs::File;

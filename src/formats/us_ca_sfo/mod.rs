@@ -1,6 +1,6 @@
 use crate::formats::util::CandidateMap;
 use crate::model::election::{Ballot, Candidate, Choice, Election};
-use crate::util::string::UnicodeString;
+use crate::util::UnicodeString;
 use itertools::Itertools;
 use std::collections::BTreeMap;
 use std::fs::File;

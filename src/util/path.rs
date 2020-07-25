@@ -2,6 +2,8 @@ use std::fs;
 use std::io::{self};
 use std::path::{Path, PathBuf};
 
+/// Crawl a directory tree, appending non-hidden files encountered to
+/// a passed mutable `result` vector.
 fn walk_path(path: &Path, result: &mut Vec<PathBuf>) -> io::Result<()> {
     if path.file_name().unwrap().to_str().unwrap().starts_with(".") {
         // Don't recurse into private directories.
@@ -18,6 +20,8 @@ fn walk_path(path: &Path, result: &mut Vec<PathBuf>) -> io::Result<()> {
     Ok(())
 }
 
+/// Crawl a directory tree and return a flat vector of the non-hidden
+/// files in it (wrapped in an IO result).
 pub fn get_files_from_path(path: &Path) -> io::Result<Vec<PathBuf>> {
     if path.exists() {
         let mut v = Vec::new();
