@@ -88,12 +88,13 @@ impl NormalizedBallot {
         }
     }
 
+    #[allow(unused)]
     pub fn choices(&self) -> Vec<CandidateId> {
         self.choices.clone().into()
     }
 
     pub fn next(&self) -> Choice {
-        match self.choices.back() {
+        match self.choices.front() {
             Some(v) => Choice::Vote(*v),
             None => {
                 if self.overvoted {
@@ -106,7 +107,7 @@ impl NormalizedBallot {
     }
 
     pub fn pop(mut self) -> Self {
-        self.choices.pop_back();
+        self.choices.pop_front();
         self
     }
 }

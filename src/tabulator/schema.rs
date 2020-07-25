@@ -19,7 +19,7 @@ pub struct TabulatorAllocation {
     pub votes: u32,
 }
 
-#[derive(Clone, Hash, Eq, PartialEq)]
+#[derive(Clone, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Allocatee {
     Candidate(CandidateId),
     Exhausted,
@@ -37,7 +37,7 @@ impl Serialize for Allocatee {
     }
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, PartialEq, Ord, PartialOrd, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Transfer {
     pub from: CandidateId,

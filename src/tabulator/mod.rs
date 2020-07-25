@@ -2,7 +2,7 @@ pub mod schema;
 
 use crate::model::election::{CandidateId, Choice, NormalizedBallot};
 use crate::tabulator::schema::{Allocatee, TabulatorAllocation, TabulatorRound, Transfer};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, BTreeSet};
 
 struct Allocations {
     exhausted: u32,
@@ -83,19 +83,6 @@ impl TabulatorState {
                 .entry(choice)
                 .or_insert_with(|| Vec::new())
                 .push(ballot.clone());
-            /*
-            if let Some(c) = ballot.n {
-                allocations
-                    .entry(Choice::Vote(*c))
-                    .or_insert_with(|| Vec::new())
-                    .push(ballot.choices.clone())
-            } else {
-                allocations
-                    .entry(Choice::Undervote)
-                    .or_insert_with(|| Vec::new())
-                    .push(Vec::new())
-            }
-            */
         }
         TabulatorState {
             allocations,
@@ -153,7 +140,7 @@ impl TabulatorState {
             eliminate
         };
 
-        let mut transfers: Vec<Transfer> = Vec::new();
+        let mut transfers: BTreeSet<Transfer> = BTreeSet::new();
         self.eliminated.extend(candidates_to_eliminate.iter());
 
         let mut bb = self.allocations;
@@ -164,7 +151,6 @@ impl TabulatorState {
             let ballots = bb.remove(&Choice::Vote(*to_eliminate)).unwrap();
 
             for mut ballot in ballots {
-                // TODO: this is O(n)
                 loop {
                     ballot = ballot.pop();
                     if let Choice::Vote(c) = ballot.next() {
@@ -204,7 +190,7 @@ impl TabulatorState {
 
         TabulatorState {
             allocations: bb,
-            transfers,
+            transfers: transfers.into_iter().collect(),
             eliminated: self.eliminated,
         }
     }
