@@ -1,6 +1,6 @@
 pub mod schema;
 
-use crate::model::election::{Ballot, CandidateId, Choice};
+use crate::model::election::{CandidateId, Choice, NormalizedBallot};
 use crate::tabulator::schema::{Allocatee, TabulatorAllocation, TabulatorRound, Transfer};
 use std::collections::{HashMap, HashSet};
 
@@ -46,7 +46,7 @@ impl Allocations {
 }
 
 struct TabulatorState {
-    pub allocations: HashMap<Choice, Vec<Vec<Choice>>>,
+    pub allocations: HashMap<Choice, Vec<NormalizedBallot>>,
     pub transfers: Vec<Transfer>,
     eliminated: HashSet<CandidateId>,
 }
@@ -75,12 +75,18 @@ impl TabulatorState {
         }
     }
 
-    pub fn new(ballots: &Vec<Ballot>) -> TabulatorState {
-        let mut allocations: HashMap<Choice, Vec<Vec<Choice>>> = HashMap::new();
+    pub fn new(ballots: &Vec<NormalizedBallot>) -> TabulatorState {
+        let mut allocations: HashMap<Choice, Vec<NormalizedBallot>> = HashMap::new();
         for ballot in ballots {
-            if let Some(c) = ballot.choices.get(0) {
+            let choice = ballot.next();
+            allocations
+                .entry(choice)
+                .or_insert_with(|| Vec::new())
+                .push(ballot.clone());
+            /*
+            if let Some(c) = ballot.n {
                 allocations
-                    .entry(*c)
+                    .entry(Choice::Vote(*c))
                     .or_insert_with(|| Vec::new())
                     .push(ballot.choices.clone())
             } else {
@@ -89,6 +95,7 @@ impl TabulatorState {
                     .or_insert_with(|| Vec::new())
                     .push(Vec::new())
             }
+            */
         }
         TabulatorState {
             allocations,
@@ -159,9 +166,9 @@ impl TabulatorState {
             for mut ballot in ballots {
                 // TODO: this is O(n)
                 loop {
-                    ballot.remove(0);
-                    if let Some(Choice::Vote(c)) = ballot.first() {
-                        if !self.eliminated.contains(c) {
+                    ballot = ballot.pop();
+                    if let Choice::Vote(c) = ballot.next() {
+                        if !self.eliminated.contains(&c) {
                             break;
                         }
                     } else {
@@ -169,19 +176,15 @@ impl TabulatorState {
                     }
                 }
 
-                let new_choice = if let Some(c) = ballot.get(0) {
-                    c
-                } else {
-                    &Choice::Undervote
-                };
+                let new_choice = ballot.next();
 
-                bb.entry(*new_choice)
+                bb.entry(new_choice)
                     .or_insert_with(|| Vec::new())
                     .push(ballot.clone());
 
                 match new_choice {
                     Choice::Vote(v) => {
-                        *transfer_map.entry(Allocatee::Candidate(*v)).or_default() += 1
+                        *transfer_map.entry(Allocatee::Candidate(v)).or_default() += 1
                     }
                     _ => *transfer_map.entry(Allocatee::Exhausted).or_default() += 1,
                 }
@@ -207,7 +210,7 @@ impl TabulatorState {
     }
 }
 
-pub fn tabulate(ballots: &Vec<Ballot>) -> Vec<TabulatorRound> {
+pub fn tabulate(ballots: &Vec<NormalizedBallot>) -> Vec<TabulatorRound> {
     let mut state = TabulatorState::new(ballots);
     let mut rounds = Vec::new();
 

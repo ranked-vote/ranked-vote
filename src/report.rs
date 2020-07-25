@@ -24,14 +24,14 @@ pub fn preprocess_election(
     ec: &ElectionCommission,
     contest: &Contest,
 ) -> ElectionPreprocessed {
-    let mut ballots = read_election(
+    let election = read_election(
         &metadata.data_format,
         &raw_base.join(&election_path),
         contest.loader_params.clone().unwrap_or_default(),
     );
     let office = ec.offices.get(&contest.office).unwrap();
 
-    ballots = normalize_election(&metadata.normalization, ballots);
+    let normalized_election = normalize_election(&metadata.normalization, election);
 
     ElectionPreprocessed {
         info: ElectionInfo {
@@ -42,6 +42,6 @@ pub fn preprocess_election(
             tabulation: metadata.tabulation.clone(),
             loader_params: contest.loader_params.clone(),
         },
-        ballots,
+        ballots: normalized_election,
     }
 }

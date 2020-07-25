@@ -1,9 +1,9 @@
 pub mod maine;
 pub mod simple;
 
-use crate::model::election::{Ballot, Election};
+use crate::model::election::{Ballot, Election, NormalizedBallot, NormalizedElection};
 
-pub type BallotNormalizer = dyn Fn(Ballot) -> Ballot;
+pub type BallotNormalizer = dyn Fn(Ballot) -> NormalizedBallot;
 
 pub fn get_normalizer_for_format(format: &str) -> &'static BallotNormalizer {
     match format {
@@ -13,11 +13,11 @@ pub fn get_normalizer_for_format(format: &str) -> &'static BallotNormalizer {
     }
 }
 
-pub fn normalize_election(format: &str, election: Election) -> Election {
+pub fn normalize_election(format: &str, election: Election) -> NormalizedElection {
     let normalizer = get_normalizer_for_format(format);
     let ballots = election.ballots.into_iter().map(normalizer).collect();
 
-    Election {
+    NormalizedElection {
         candidates: election.candidates,
         ballots: ballots,
     }

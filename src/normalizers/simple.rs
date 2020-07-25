@@ -1,41 +1,29 @@
-use crate::model::election::{Ballot, Choice};
+use crate::model::election::{Ballot, Choice, NormalizedBallot};
 use std::collections::BTreeSet;
 
-pub fn simple_normalizer(ballot: Ballot) -> Ballot {
+pub fn simple_normalizer(ballot: Ballot) -> NormalizedBallot {
     let mut seen = BTreeSet::new();
     let Ballot { id, choices } = ballot;
     let mut new_choices = Vec::new();
-    let mut undervote = false;
+    let mut overvoted = false;
 
     for choice in choices {
         match choice {
             Choice::Vote(v) => {
-                if seen.contains(&v) {
-                    undervote = true;
-                } else {
+                if !seen.contains(&v) {
                     seen.insert(v);
-                    new_choices.push(Choice::Vote(v));
+                    new_choices.push(v);
                 }
             }
-            Choice::Undervote => {
-                undervote = true;
-            }
             Choice::Overvote => {
-                new_choices.push(Choice::Overvote);
-                undervote = false;
+                overvoted = true;
                 break;
             }
+            _ => (),
         }
     }
 
-    if undervote {
-        new_choices.push(Choice::Undervote)
-    }
-
-    Ballot {
-        id,
-        choices: new_choices,
-    }
+    NormalizedBallot::new(id, new_choices, overvoted)
 }
 
 #[cfg(test)]
@@ -50,10 +38,13 @@ mod tests {
         let c3 = Choice::Vote(CandidateId(3));
         let b = Ballot::new("1".into(), vec![c1, c2, c3]);
 
+        let normalized = simple_normalizer(b);
         assert_eq!(
-            Ballot::new("1".into(), vec![c1, c2, c3]),
-            simple_normalizer(b)
+            vec![CandidateId(1), CandidateId(2), CandidateId(3)],
+            normalized.choices()
         );
+        assert_eq!(false, normalized.overvoted);
+        assert_eq!("1", normalized.id);
     }
 
     #[test]
@@ -62,10 +53,10 @@ mod tests {
         let c2 = Choice::Vote(CandidateId(2));
         let b = Ballot::new("1".into(), vec![c1, c2, c1]);
 
-        assert_eq!(
-            Ballot::new("1".into(), vec![c1, c2, Choice::Undervote]),
-            simple_normalizer(b)
-        );
+        let normalized = simple_normalizer(b);
+        assert_eq!(vec![CandidateId(1), CandidateId(2)], normalized.choices());
+        assert_eq!(false, normalized.overvoted);
+        assert_eq!("1", normalized.id);
     }
 
     #[test]
@@ -73,10 +64,10 @@ mod tests {
         let c1 = Choice::Vote(CandidateId(1));
         let b = Ballot::new("1".into(), vec![c1, c1, c1, c1]);
 
-        assert_eq!(
-            Ballot::new("1".into(), vec![c1, Choice::Undervote]),
-            simple_normalizer(b)
-        );
+        let normalized = simple_normalizer(b);
+        assert_eq!(vec![CandidateId(1)], normalized.choices());
+        assert_eq!(false, normalized.overvoted);
+        assert_eq!("1", normalized.id);
     }
 
     #[test]
@@ -85,10 +76,10 @@ mod tests {
         let c2 = Choice::Vote(CandidateId(2));
         let b = Ballot::new("1".into(), vec![c1, Choice::Undervote, c2]);
 
-        assert_eq!(
-            Ballot::new("1".into(), vec![c1, c2, Choice::Undervote]),
-            simple_normalizer(b)
-        );
+        let normalized = simple_normalizer(b);
+        assert_eq!(vec![CandidateId(1), CandidateId(2)], normalized.choices());
+        assert_eq!(false, normalized.overvoted);
+        assert_eq!("1", normalized.id);
     }
 
     #[test]
@@ -97,9 +88,9 @@ mod tests {
         let c2 = Choice::Vote(CandidateId(2));
         let b = Ballot::new("1".into(), vec![c1, Choice::Overvote, c2]);
 
-        assert_eq!(
-            Ballot::new("1".into(), vec![c1, Choice::Overvote]),
-            simple_normalizer(b)
-        );
+        let normalized = simple_normalizer(b);
+        assert_eq!(vec![CandidateId(1)], normalized.choices());
+        assert_eq!(true, normalized.overvoted);
+        assert_eq!("1", normalized.id);
     }
 }

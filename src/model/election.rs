@@ -1,6 +1,7 @@
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::BTreeMap;
+use std::collections::VecDeque;
 
 #[derive(Clone, Copy, Debug, PartialEq, Ord, PartialOrd, Eq, Hash)]
 pub struct CandidateId(pub u32);
@@ -59,57 +60,7 @@ pub enum Choice {
     Overvote,
 }
 
-struct ChoiceVisitor;
-
-impl<'de> Visitor<'de> for ChoiceVisitor {
-    type Value = Choice;
-
-    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("an unsigned integer or 'U', 'O', 'V'")
-    }
-
-    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        Ok(Choice::Vote(CandidateId(v as u32)))
-    }
-
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        match v {
-            "U" => Ok(Choice::Undervote),
-            "O" => Ok(Choice::Overvote),
-            _ => Err(de::Error::custom("Expected U, O, or W if char.")),
-        }
-    }
-}
-
-impl Serialize for Choice {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match self {
-            Choice::Vote(CandidateId(v)) => serializer.serialize_u32(*v),
-            Choice::Undervote => serializer.serialize_char('U'),
-            Choice::Overvote => serializer.serialize_char('O'),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Choice {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_any(ChoiceVisitor)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Ballot {
     pub id: String,
     pub choices: Vec<Choice>,
@@ -121,7 +72,45 @@ impl Ballot {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct NormalizedBallot {
+    pub id: String,
+    choices: VecDeque<CandidateId>,
+    pub overvoted: bool,
+}
+
+impl NormalizedBallot {
+    pub fn new(id: String, choices: Vec<CandidateId>, overvoted: bool) -> NormalizedBallot {
+        NormalizedBallot {
+            id,
+            choices: choices.into(),
+            overvoted,
+        }
+    }
+
+    pub fn choices(&self) -> Vec<CandidateId> {
+        self.choices.clone().into()
+    }
+
+    pub fn next(&self) -> Choice {
+        match self.choices.back() {
+            Some(v) => Choice::Vote(*v),
+            None => {
+                if self.overvoted {
+                    Choice::Overvote
+                } else {
+                    Choice::Undervote
+                }
+            }
+        }
+    }
+
+    pub fn pop(mut self) -> Self {
+        self.choices.pop_back();
+        self
+    }
+}
+
 pub struct Election {
     pub candidates: Vec<Candidate>,
     pub ballots: Vec<Ballot>,
@@ -134,6 +123,12 @@ impl Election {
             ballots,
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct NormalizedElection {
+    pub candidates: Vec<Candidate>,
+    pub ballots: Vec<NormalizedBallot>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -158,5 +153,5 @@ pub struct ElectionInfo {
 #[serde(rename_all = "camelCase")]
 pub struct ElectionPreprocessed {
     pub info: ElectionInfo,
-    pub ballots: Election,
+    pub ballots: NormalizedElection,
 }
