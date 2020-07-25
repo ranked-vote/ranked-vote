@@ -44,6 +44,8 @@ pub fn preprocess_election(
             data_format: metadata.data_format.clone(),
             tabulation: metadata.tabulation.clone(),
             loader_params: contest.loader_params.clone(),
+            jurisdiction_path: ec.path.clone(),
+            election_path: election_path.to_string()
         },
         ballots: normalized_election,
     }

@@ -145,6 +145,10 @@ pub struct ElectionInfo {
 
     pub tabulation: String,
 
+    pub jurisdiction_path: String,
+    
+    pub election_path: String,
+
     pub office: String,
 
     pub loader_params: Option<BTreeMap<String, String>>,
