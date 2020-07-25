@@ -2,7 +2,7 @@ pub mod schema;
 
 use crate::model::election::{CandidateId, Choice, NormalizedBallot};
 use crate::tabulator::schema::{Allocatee, TabulatorAllocation, TabulatorRound, Transfer};
-use std::collections::{HashMap, HashSet, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 
 struct Allocations {
     exhausted: u32,
@@ -46,7 +46,7 @@ impl Allocations {
 }
 
 struct TabulatorState {
-    pub allocations: HashMap<Choice, Vec<NormalizedBallot>>,
+    pub allocations: BTreeMap<Choice, Vec<NormalizedBallot>>,
     pub transfers: Vec<Transfer>,
     eliminated: HashSet<CandidateId>,
 }
@@ -76,7 +76,7 @@ impl TabulatorState {
     }
 
     pub fn new(ballots: &Vec<NormalizedBallot>) -> TabulatorState {
-        let mut allocations: HashMap<Choice, Vec<NormalizedBallot>> = HashMap::new();
+        let mut allocations: BTreeMap<Choice, Vec<NormalizedBallot>> = BTreeMap::new();
         for ballot in ballots {
             let choice = ballot.next();
             allocations
@@ -92,7 +92,7 @@ impl TabulatorState {
     }
 
     pub fn allocations(&self) -> Allocations {
-        let mut alloc: HashMap<CandidateId, u32> = HashMap::new();
+        let mut alloc: BTreeMap<CandidateId, u32> = BTreeMap::new();
         let mut exhausted: u32 = 0;
         for (choice, ballots) in &self.allocations {
             let count = ballots.len() as u32;
@@ -146,7 +146,7 @@ impl TabulatorState {
         let mut bb = self.allocations;
 
         for to_eliminate in &candidates_to_eliminate {
-            let mut transfer_map: HashMap<Allocatee, u32> = HashMap::new();
+            let mut transfer_map: BTreeMap<Allocatee, u32> = BTreeMap::new();
 
             let ballots = bb.remove(&Choice::Vote(*to_eliminate)).unwrap();
 

@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 /// Represents a body that oversees elections for one or more constituancies.
-pub struct ElectionCommission {
+pub struct Jurisdiction {
     /// Name of the district.
     pub name: String,
     /// Path to the district, e.g. <country>/<state>/<city>.

@@ -10,7 +10,7 @@ mod util;
 use crate::commands::info::info;
 use crate::commands::report::report;
 use crate::commands::sync::sync;
-use crate::model::metadata::ElectionCommission;
+use crate::model::metadata::Jurisdiction;
 use crate::util::path::get_files_from_path;
 use clap::{App, Arg, SubCommand};
 use colored::*;
@@ -92,7 +92,7 @@ fn main() {
             let file = File::open(file).unwrap();
 
             let reader = BufReader::new(file);
-            let _: ElectionCommission = serde_json::from_reader(reader).unwrap();
+            let _: Jurisdiction = serde_json::from_reader(reader).unwrap();
             eprintln!(" {}", "ok!".green());
         }
     } else if let Some(matches) = matches.subcommand_matches("info") {

@@ -1,6 +1,6 @@
 use crate::formats::read_election;
 use crate::model::election::{ElectionInfo, ElectionPreprocessed};
-use crate::model::metadata::{Contest, ElectionCommission, ElectionMetadata};
+use crate::model::metadata::{Contest, ElectionMetadata, Jurisdiction};
 use crate::model::report::ContestReport;
 use crate::normalizers::normalize_election;
 use crate::tabulator::tabulate;
@@ -21,7 +21,7 @@ pub fn preprocess_election(
     raw_base: &Path,
     metadata: &ElectionMetadata,
     election_path: &str,
-    ec: &ElectionCommission,
+    ec: &Jurisdiction,
     contest: &Contest,
 ) -> ElectionPreprocessed {
     let election = read_election(
