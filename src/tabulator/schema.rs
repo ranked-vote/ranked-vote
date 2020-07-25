@@ -29,7 +29,7 @@ impl Allocatee {
     pub fn from_choice(c: Choice) -> Allocatee {
         match c {
             Choice::Vote(v) => Allocatee::Candidate(v),
-            _ => Allocatee::Exhausted
+            _ => Allocatee::Exhausted,
         }
     }
 }

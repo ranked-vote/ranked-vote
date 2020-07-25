@@ -129,7 +129,7 @@ impl TabulatorState {
         Allocations::new(votes, exhausted)
     }
 
-    pub fn do_elimination(mut self) -> TabulatorState {
+    pub fn do_elimination(self) -> TabulatorState {
         let allocations = self.allocations();
 
         // Determine which candidates to eliminate.
@@ -206,7 +206,9 @@ impl TabulatorState {
                     .or_insert_with(|| Vec::new())
                     .push(ballot.clone());
 
-                *transfer_map.entry(Allocatee::from_choice(new_choice)).or_default() += 1;
+                *transfer_map
+                    .entry(Allocatee::from_choice(new_choice))
+                    .or_default() += 1;
             }
 
             // Add data about transfers from the eliminated candidate to the transfers list.
