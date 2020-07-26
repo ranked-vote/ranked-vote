@@ -43,8 +43,8 @@ impl<'de> Deserialize<'de> for CandidateId {
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub struct Candidate {
-    name: String,
-    write_in: bool,
+    pub name: String,
+    pub write_in: bool,
 }
 
 impl Candidate {
@@ -146,10 +146,16 @@ pub struct ElectionInfo {
     pub tabulation: String,
 
     pub jurisdiction_path: String,
-    
+
     pub election_path: String,
 
     pub office: String,
+
+    pub office_name: String,
+
+    pub jurisdiction_name: String,
+
+    pub election_name: String,
 
     pub loader_params: Option<BTreeMap<String, String>>,
 }

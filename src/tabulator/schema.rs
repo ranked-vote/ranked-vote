@@ -1,7 +1,8 @@
 use crate::model::election::{CandidateId, Choice};
-use serde::{Serialize, Serializer};
+use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TabulatorRound {
     pub allocations: Vec<TabulatorAllocation>,
@@ -12,7 +13,7 @@ pub struct TabulatorRound {
     //eliminated: Vec<u32>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TabulatorAllocation {
     pub allocatee: Allocatee,
@@ -32,6 +33,13 @@ impl Allocatee {
             _ => Allocatee::Exhausted,
         }
     }
+
+    pub fn unwrap_candidate_id(&self) -> CandidateId {
+        match self {
+            Allocatee::Candidate(c) => *c,
+            _ => panic!("unwrap_candidate_id called on Exhausted allocatee."),
+        }
+    }
 }
 
 impl Serialize for Allocatee {
@@ -46,7 +54,43 @@ impl Serialize for Allocatee {
     }
 }
 
-#[derive(Serialize, Clone, PartialEq, Ord, PartialOrd, Eq)]
+struct AllocateeVisitor;
+
+impl<'de> Visitor<'de> for AllocateeVisitor {
+    type Value = Allocatee;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("an unsigned integer or \"X\"")
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(Allocatee::Candidate(CandidateId(v as u32)))
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        match v {
+            "X" => Ok(Allocatee::Exhausted),
+            _ => Err(de::Error::custom("Expected \"X\".")),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Allocatee {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_any(AllocateeVisitor)
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, Ord, PartialOrd, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Transfer {
     pub from: CandidateId,
