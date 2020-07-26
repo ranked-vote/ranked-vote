@@ -3,7 +3,7 @@ mod nist_sp_1500;
 mod us_ca_sfo;
 mod us_me;
 mod us_vt_btv;
-mod util;
+mod common;
 
 use crate::model::election::Election;
 use std::collections::BTreeMap;

@@ -1,4 +1,4 @@
-use crate::formats::util::CandidateMap;
+use crate::formats::common::{CandidateMap, normalize_name};
 use crate::model::election::{Ballot, Candidate, Choice, Election};
 use calamine::{open_workbook_auto, DataType, Reader};
 use regex::Regex;
@@ -28,7 +28,7 @@ pub fn parse_choice(candidate: &str, candidate_map: &mut CandidateMap<String>) -
     } else if candidate == "undervote" {
         Choice::Undervote
     } else {
-        let candidate_rx = Regex::new(r#"(.+) \(\d+\)"#).unwrap();
+        let candidate_rx = Regex::new(r#"(?:DEM |REP )?(.+) \(\d+\)"#).unwrap();
         let candidate = if let Some(c) = candidate_rx.captures(&candidate) {
             c.get(1).unwrap().as_str()
         } else {
@@ -37,7 +37,7 @@ pub fn parse_choice(candidate: &str, candidate_map: &mut CandidateMap<String>) -
 
         candidate_map.add_id_to_choice(
             candidate.to_string(),
-            Candidate::new(candidate.to_string(), false),
+            Candidate::new(normalize_name(candidate), false),
         )
     }
 }

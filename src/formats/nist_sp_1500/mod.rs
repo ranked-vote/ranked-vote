@@ -1,7 +1,7 @@
 pub mod model;
 
+use crate::formats::common::{normalize_name, CandidateMap};
 use crate::formats::nist_sp_1500::model::{CandidateManifest, CandidateType, CvrExport};
-use crate::formats::util::CandidateMap;
 use crate::model::election::{Ballot, Candidate, Choice, Election};
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -41,7 +41,7 @@ fn get_candidates(manifest: &CandidateManifest, contest_id: u32) -> CandidateMap
             };
             map.add(
                 candidate.id,
-                Candidate::new(candidate.description.clone(), write_in),
+                Candidate::new(normalize_name(&candidate.description), write_in),
             );
         }
     }
