@@ -88,7 +88,7 @@ pub fn report(
             }
 
             election_index_entries.push(ElectionIndexEntry {
-                path: election_path.clone(),
+                path: format!("{}/{}", jurisdiction.path, election_path),
                 jurisdiction_name: jurisdiction.name.clone(),
                 election_name: election.name.clone(),
                 date: election.date.clone(),
