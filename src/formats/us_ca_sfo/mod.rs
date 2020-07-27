@@ -1,4 +1,4 @@
-use crate::formats::common::{CandidateMap, normalize_name};
+use crate::formats::common::{normalize_name, CandidateMap};
 use crate::model::election::{Ballot, Candidate, Choice, Election};
 use crate::util::UnicodeString;
 use itertools::Itertools;
@@ -77,7 +77,7 @@ fn read_candidates(reader: &mut dyn BufRead, contest_id: u32) -> CandidateMap<u3
             if record.contest_id != contest_id {
                 continue;
             }
-            let name = normalize_name(&record.description);
+            let name = normalize_name(&record.description, false);
 
             let candidate = if name.starts_with(WRITE_IN_PREFIX) {
                 let name = name[(WRITE_IN_PREFIX.len())..].to_string();

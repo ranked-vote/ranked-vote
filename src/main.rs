@@ -16,6 +16,9 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
+#[macro_use]
+extern crate lazy_static;
+
 fn main() {
     let matches = App::new("ranked-vote cli")
         .version("0.1")
@@ -61,8 +64,14 @@ fn main() {
                         .help("raw data directory"),
                 )
                 .arg(
-                    Arg::with_name("report-dir")
+                    Arg::with_name("preprocessed-dir")
                         .index(3)
+                        .required(true)
+                        .help("preprocessed file output directory"),
+                )
+                .arg(
+                    Arg::with_name("report-dir")
+                        .index(4)
                         .required(true)
                         .help("report output directory"),
                 )
@@ -106,6 +115,7 @@ fn main() {
         let meta_dir = matches.value_of("meta-dir").unwrap();
         let raw_dir = matches.value_of("raw-data-dir").unwrap();
         let report_dir = matches.value_of("report-dir").unwrap();
+        let preprocessed_dir = matches.value_of("preprocessed-dir").unwrap();
         let force_preprocess = matches.is_present("force-preprocess");
         let force_report = matches.is_present("force-report");
 
@@ -113,6 +123,7 @@ fn main() {
             meta_dir,
             raw_dir,
             report_dir,
+            preprocessed_dir,
             force_preprocess,
             force_report,
         );

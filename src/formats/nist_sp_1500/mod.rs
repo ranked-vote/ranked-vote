@@ -41,7 +41,7 @@ fn get_candidates(manifest: &CandidateManifest, contest_id: u32) -> CandidateMap
             };
             map.add(
                 candidate.id,
-                Candidate::new(normalize_name(&candidate.description), write_in),
+                Candidate::new(normalize_name(&candidate.description, false), write_in),
             );
         }
     }

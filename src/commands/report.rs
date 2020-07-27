@@ -11,11 +11,11 @@ pub fn report(
     meta_dir: &str,
     raw_dir: &str,
     report_dir: &str,
+    preprocessed_dir: &str,
     force_preprocess: bool,
     force_report: bool,
 ) {
     let raw_path = Path::new(raw_dir);
-    let report_path = Path::new(report_dir);
     let mut election_index_entries: Vec<ElectionIndexEntry> = Vec::new();
 
     for (_, jurisdiction) in read_meta(meta_dir) {
@@ -31,21 +31,29 @@ pub fn report(
                 ));
                 eprintln!("Office: {}", office.name.red());
 
-                let output_base = report_path
+                let report_path = Path::new(report_dir)
                     .join(&jurisdiction.path)
                     .join(&election_path)
-                    .join(&contest.office);
+                    .join(&contest.office)
+                    .join("report.json");
+                let preprocessed_path = Path::new(preprocessed_dir)
+                    .join(&jurisdiction.path)
+                    .join(&election_path)
+                    .join(&contest.office)
+                    .join("normalized.json.gz");
 
-                let report_path = output_base.join("report.json");
-                let report = if report_path.exists() && !force_report && !force_preprocess {
+                let report = if report_path.exists()
+                    && preprocessed_path.exists()
+                    && !force_report
+                    && !force_preprocess
+                {
                     eprintln!(
                         "Skipping because {} exists.",
                         report_path.to_str().unwrap().bright_cyan()
                     );
                     read_serialized(&report_path)
                 } else {
-                    create_dir_all(&output_base).unwrap();
-                    let preprocessed_path = output_base.join("normalized.json.gz");
+                    create_dir_all(&report_path.parent().unwrap()).unwrap();
 
                     let preprocessed: ElectionPreprocessed =
                         if preprocessed_path.exists() && !force_preprocess {
@@ -55,6 +63,8 @@ pub fn report(
                             );
                             read_serialized(&preprocessed_path)
                         } else {
+                            create_dir_all(preprocessed_path.parent().unwrap()).unwrap();
+
                             eprintln!(
                                 "Generating preprocessed {}.",
                                 preprocessed_path.to_str().unwrap().bright_cyan()
@@ -102,5 +112,5 @@ pub fn report(
         elections: election_index_entries,
     };
 
-    write_serialized(&report_path.join("index.json"), &report_index);
+    write_serialized(&Path::new(report_dir).join("index.json"), &report_index);
 }

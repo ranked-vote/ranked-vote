@@ -1,6 +1,7 @@
 use crate::model::election::{Candidate, CandidateId, Choice};
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub struct CandidateMap<ExternalCandidateId: Eq + Hash + Clone> {
@@ -9,7 +10,7 @@ pub struct CandidateMap<ExternalCandidateId: Eq + Hash + Clone> {
     candidates: Vec<Candidate>,
 }
 
-impl<ExternalCandidateId: Eq + Hash + Clone> CandidateMap<ExternalCandidateId> {
+impl<ExternalCandidateId: Eq + Hash + Clone + Debug> CandidateMap<ExternalCandidateId> {
     pub fn new() -> CandidateMap<ExternalCandidateId> {
         CandidateMap {
             id_to_index: HashMap::new(),
@@ -31,6 +32,7 @@ impl<ExternalCandidateId: Eq + Hash + Clone> CandidateMap<ExternalCandidateId> {
         candidate: Candidate,
     ) -> Choice {
         if !self.id_to_index.contains_key(&external_candidate_id) {
+            eprintln!("New candidate: {:?}", external_candidate_id);
             self.add(external_candidate_id.clone(), candidate);
         }
 

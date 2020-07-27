@@ -3,8 +3,8 @@
 set -e
 
 umount raw-data
-umount reports
+umount preprocessed
 
 rmdir raw-data
-rmdir reports
+rmdir preprocessed
 

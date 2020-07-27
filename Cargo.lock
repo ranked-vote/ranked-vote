@@ -345,6 +345,7 @@ dependencies = [
  "colored",
  "flate2",
  "itertools",
+ "lazy_static",
  "nom",
  "regex",
  "serde",

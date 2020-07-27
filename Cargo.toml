@@ -33,6 +33,9 @@ zip = "0.5"
 # Regex for parsing certain formats.
 regex = "1"
 
+# For compiled regex expressions.
+lazy_static = "1.4.0"
+
 # Nom for parsing certain formats.
 nom = "5"
 
