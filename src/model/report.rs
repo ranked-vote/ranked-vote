@@ -1,4 +1,4 @@
-use crate::model::election::{Candidate, ElectionInfo};
+use crate::model::election::{Candidate, ElectionInfo, CandidateId};
 use crate::tabulator::TabulatorRound;
 use serde::{Deserialize, Serialize};
 
@@ -31,28 +31,27 @@ pub struct ContestIndexEntry {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct CandidateVotes {
+    pub candidate: CandidateId,
+    pub first_round_votes: u32,
+    pub transfer_votes: u32,
+    pub round_eliminated: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ContestReport {
     pub info: ElectionInfo,
     pub ballot_count: u32,
     pub candidates: Vec<Candidate>,
     pub rounds: Vec<TabulatorRound>,
+    pub winner: CandidateId,
+    pub num_candidates: u32,
+    pub total_votes: Vec<CandidateVotes>,
 }
 
 impl ContestReport {
     pub fn winner(&self) -> &Candidate {
-        let final_round_winner = self
-            .rounds
-            .last()
-            .unwrap()
-            .allocations
-            .first()
-            .unwrap()
-            .allocatee
-            .unwrap_candidate_id();
-        &self.candidates[final_round_winner.0 as usize]
-    }
-
-    pub fn num_candidates(&self) -> u32 {
-        self.candidates.iter().filter(|d| !d.write_in).count() as u32
+        &self.candidates[self.winner.0 as usize]
     }
 }

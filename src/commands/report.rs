@@ -92,7 +92,7 @@ pub fn report(
                     office_name: report.info.office_name.clone(),
                     name: report.info.name.clone(),
                     winner: report.winner().name.clone(),
-                    num_candidates: report.num_candidates(),
+                    num_candidates: report.num_candidates,
                     num_rounds: report.rounds.len() as u32,
                 })
             }

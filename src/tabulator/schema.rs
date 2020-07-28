@@ -34,10 +34,10 @@ impl Allocatee {
         }
     }
 
-    pub fn unwrap_candidate_id(&self) -> CandidateId {
+    pub fn candidate_id(&self) -> Option<CandidateId> {
         match self {
-            Allocatee::Candidate(c) => *c,
-            _ => panic!("unwrap_candidate_id called on Exhausted allocatee."),
+            Allocatee::Candidate(c) => Some(*c),
+            _ => None
         }
     }
 }
