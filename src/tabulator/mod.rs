@@ -133,40 +133,18 @@ impl TabulatorState {
         let allocations = self.allocations();
 
         // Determine which candidates to eliminate.
-        let candidates_to_eliminate = {
-            let mut candidates = allocations.votes;
-            let mut candidates_to_eliminate: Vec<CandidateId> = Vec::new();
+        let candidates_to_eliminate: BTreeSet<CandidateId> = {
+            let mut ai = allocations.votes.iter();
+            let mut remaining_votes = allocations.continuing();
 
-            // The number of ballots that have been "freed up" by the elimination
-            // so far. We stop eliminating candidates when we reach a candidate
-            // for whom the number of freed ballots, if all ranked that candidate
-            // higher than the other remaining candidates, would be enough to
-            // change that candidate's ranking.
-            let mut num_freed_ballots = 0;
-
-            loop {
-                match candidates.as_slice() {
-                    [.., (_, second_last_candidate_votes), (_, last_candidate_votes)] => {
-                        if num_freed_ballots + *last_candidate_votes > *second_last_candidate_votes
-                        {
-                            break;
-                        }
-                    }
-                    // If less than two candidates remain, we should have a winner.
-                    _ => break,
+            while let Some((c, votes)) = ai.next() {
+                remaining_votes -= votes;
+                if votes > &remaining_votes {
+                    break;
                 }
-
-                // Remove this candidate from the vote allocation list, mark them as eliminated, and
-                // count ballots previously attributed to them as freed.
-                let (cid, c) = candidates.pop().unwrap();
-                candidates_to_eliminate.push(cid);
-                num_freed_ballots += c;
             }
 
-            // This isn't impossible, but indicates a tie or something else weird
-            // that needs manual investigation.
-            assert!(candidates_to_eliminate.len() >= 1);
-            candidates_to_eliminate
+            ai.map(|d| d.0).collect()
         };
 
         let mut transfers: BTreeSet<Transfer> = BTreeSet::new();
@@ -224,9 +202,20 @@ impl TabulatorState {
             );
         }
 
+        // Collect transfers and sort them such that the transfers into the candidates
+        // with more votes come first.
+        // TODO: it might be cleaner to move this into a constructor of TabulatorState.
+        let mut transfers: Vec<Transfer> = transfers.into_iter().collect();
+        transfers.sort_by_key(|x| match x.to {
+            Allocatee::Exhausted => 0,
+            Allocatee::Candidate(c) => {
+                -(candidate_ballots.get(&Choice::Vote(c)).unwrap().len() as i32)
+            }
+        });
+
         TabulatorState {
             candidate_ballots,
-            transfers: transfers.into_iter().collect(),
+            transfers,
             eliminated,
         }
     }
