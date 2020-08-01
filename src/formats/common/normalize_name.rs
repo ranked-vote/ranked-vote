@@ -2,7 +2,7 @@ use regex::Regex;
 
 
 pub fn normalize_name(name: &str, flip_comma: bool) -> String {
-    let fixed = if flip_comma {
+    let mut fixed = if flip_comma {
         // Convert "Last, First" names into "First Last"
         lazy_static! {
             static ref FIX_COMMA: Regex = Regex::new("(?P<last>.+), (?P<first>.+)").unwrap();
@@ -13,6 +13,7 @@ pub fn normalize_name(name: &str, flip_comma: bool) -> String {
         name.to_string()
     };
 
+    fixed = fixed.replace("''", "\"");
     let chars: Vec<char> = fixed.chars().collect();
     let mut new_chars: Vec<char> = Vec::with_capacity(chars.len());
 

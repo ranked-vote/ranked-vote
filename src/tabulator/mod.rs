@@ -137,7 +137,7 @@ impl TabulatorState {
             let mut ai = allocations.votes.iter();
             let mut remaining_votes = allocations.continuing();
 
-            while let Some((c, votes)) = ai.next() {
+            while let Some((_, votes)) = ai.next() {
                 remaining_votes -= votes;
                 if votes > &remaining_votes {
                     break;
