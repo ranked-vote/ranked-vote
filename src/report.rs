@@ -4,6 +4,7 @@ use crate::model::metadata::{Contest, ElectionMetadata, Jurisdiction};
 use crate::model::report::{CandidatePairEntry, CandidatePairTable, CandidateVotes, ContestReport};
 use crate::normalizers::normalize_election;
 use crate::tabulator::{tabulate, Allocatee, TabulatorRound};
+use colored::*;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
 
@@ -61,12 +62,12 @@ pub fn total_votes(rounds: &Vec<TabulatorRound>) -> Vec<CandidateVotes> {
     result
 }
 
-pub fn generate_pairwise_preferences(
+pub fn generate_pairwise_counts(
     candidates: &Vec<CandidateId>,
     ballots: &Vec<NormalizedBallot>,
-) -> CandidatePairTable {
+) -> HashMap<(CandidateId, CandidateId), u32> {
     let mut preference_map: HashMap<(CandidateId, CandidateId), u32> = HashMap::new();
-    let all_candidates: HashSet<CandidateId> = candidates.iter().map(|d| *d).collect();
+    let all_candidates: HashSet<CandidateId> = candidates.iter().copied().collect();
 
     for ballot in ballots {
         let mut above_ranked: HashSet<CandidateId> = HashSet::new();
@@ -88,6 +89,13 @@ pub fn generate_pairwise_preferences(
         }
     }
 
+    preference_map
+}
+
+pub fn generate_pairwise_preferences(
+    candidates: &Vec<CandidateId>,
+    preference_map: &HashMap<(CandidateId, CandidateId), u32>,
+) -> CandidatePairTable {
     let axis: Vec<Allocatee> = candidates
         .iter()
         .map(|d| Allocatee::Candidate(*d))
@@ -190,11 +198,11 @@ pub fn generate_first_final(
         let choices = ballot.choices();
         if let Some(first) = choices.first() {
             if !final_round_candidates.contains(first) {
-                let final_choice =
-                    match choices.iter().find(|x| final_round_candidates.contains(x)) {
-                        Some(v) => Allocatee::Candidate(*v),
-                        _ => Allocatee::Exhausted,
-                    };
+                let final_choice = match choices.iter().find(|x| final_round_candidates.contains(x))
+                {
+                    Some(v) => Allocatee::Candidate(*v),
+                    _ => Allocatee::Exhausted,
+                };
 
                 *first_final.entry((*first, final_choice)).or_insert(0) += 1;
                 *first_total.entry(*first).or_insert(0) += 1;
@@ -244,6 +252,48 @@ pub fn generate_first_final(
     }
 }
 
+pub fn graph(
+    candidates: &Vec<CandidateId>,
+    preference_map: &HashMap<(CandidateId, CandidateId), u32>,
+) -> HashMap<CandidateId, Vec<CandidateId>> {
+    let mut graph = HashMap::new();
+
+    for c1 in candidates {
+        for c2 in candidates {
+            let c1v = preference_map.get(&(*c1, *c2)).unwrap_or(&0);
+            let c2v = preference_map.get(&(*c2, *c1)).unwrap_or(&0);
+
+            if c1v > c2v {
+                graph.entry(*c2).or_insert_with(|| Vec::new()).push(*c1);
+            }
+        }
+    }
+
+    graph
+}
+
+pub fn smith_set(
+    candidates: &Vec<CandidateId>,
+    graph: &HashMap<CandidateId, Vec<CandidateId>>,
+) -> HashSet<CandidateId> {
+    let mut last_set: HashSet<CandidateId> = candidates.iter().cloned().collect();
+
+    loop {
+        let this_set: HashSet<CandidateId> = last_set
+            .iter()
+            .flat_map(|d| graph.get(d).cloned().unwrap_or(Vec::new()))
+            .collect();
+
+        if this_set.len() == 0 || this_set == last_set {
+            break;
+        }
+
+        last_set = this_set;
+    }
+
+    last_set
+}
+
 /// Generate a `ContestReport` from preprocessed election data.
 pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
     let ballots = &election.ballots.ballots;
@@ -258,7 +308,23 @@ pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
 
     let total_votes = total_votes(&rounds);
     let candidates: Vec<CandidateId> = total_votes.iter().map(|d| d.candidate).collect();
-    let pairwise_preferences = generate_pairwise_preferences(&candidates, &ballots);
+
+    let pairwise_counts: HashMap<(CandidateId, CandidateId), u32> =
+        generate_pairwise_counts(&candidates, &ballots);
+
+    let pairwise_preferences = generate_pairwise_preferences(&candidates, &pairwise_counts);
+    let graph = graph(&candidates, &pairwise_counts);
+    let smith_set = smith_set(&candidates, &graph);
+    let condorcet = if smith_set.len() == 1 {
+        smith_set.iter().next().copied()
+    } else {
+        None
+    };
+
+    if Some(winner) != condorcet {
+        eprintln!("{}", "Non-condorcet!".purple());
+    }
+
     let first_alternate = generate_first_alternate(&candidates, &ballots);
 
     let final_round_candidates: HashSet<CandidateId> = rounds
@@ -282,6 +348,8 @@ pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
         pairwise_preferences,
         first_alternate,
         first_final,
+        smith_set: smith_set.into_iter().collect(),
+        condorcet,
     }
 }
 

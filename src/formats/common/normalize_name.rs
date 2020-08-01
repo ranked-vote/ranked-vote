@@ -1,13 +1,12 @@
 use regex::Regex;
 
-
 pub fn normalize_name(name: &str, flip_comma: bool) -> String {
     let mut fixed = if flip_comma {
         // Convert "Last, First" names into "First Last"
         lazy_static! {
             static ref FIX_COMMA: Regex = Regex::new("(?P<last>.+), (?P<first>.+)").unwrap();
         }
-    
+
         FIX_COMMA.replace(name, "$first $last").to_string()
     } else {
         name.to_string()

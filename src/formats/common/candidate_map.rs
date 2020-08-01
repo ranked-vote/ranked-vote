@@ -1,7 +1,7 @@
 use crate::model::election::{Candidate, CandidateId, Choice};
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::fmt::Debug;
+use std::hash::Hash;
 
 #[derive(Debug)]
 pub struct CandidateMap<ExternalCandidateId: Eq + Hash + Clone> {

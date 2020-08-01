@@ -37,7 +37,7 @@ impl Allocatee {
     pub fn candidate_id(&self) -> Option<CandidateId> {
         match self {
             Allocatee::Candidate(c) => Some(*c),
-            _ => None
+            _ => None,
         }
     }
 }

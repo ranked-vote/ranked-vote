@@ -1,5 +1,5 @@
-use crate::model::election::{Candidate, ElectionInfo, CandidateId};
-use crate::tabulator::{TabulatorRound, Allocatee};
+use crate::model::election::{Candidate, CandidateId, ElectionInfo};
+use crate::tabulator::{Allocatee, TabulatorRound};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
@@ -61,11 +61,13 @@ pub struct ContestReport {
     pub candidates: Vec<Candidate>,
     pub rounds: Vec<TabulatorRound>,
     pub winner: CandidateId,
+    pub condorcet: Option<CandidateId>,
     pub num_candidates: u32,
     pub total_votes: Vec<CandidateVotes>,
     pub pairwise_preferences: CandidatePairTable,
     pub first_alternate: CandidatePairTable,
     pub first_final: CandidatePairTable,
+    pub smith_set: Vec<CandidateId>,
 }
 
 impl ContestReport {
