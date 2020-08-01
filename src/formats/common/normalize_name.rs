@@ -13,14 +13,19 @@ pub fn normalize_name(name: &str, flip_comma: bool) -> String {
         name.to_string()
     };
 
-    fixed = fixed.replace("''", "\"");
+    if fixed.split("''").count() > 2 {
+        fixed = fixed.replace("''", "\"");
+    } else {
+        fixed = fixed.replace("''", "\'");
+    }
+
     let chars: Vec<char> = fixed.chars().collect();
     let mut new_chars: Vec<char> = Vec::with_capacity(chars.len());
 
     let mut first = true;
     let mut in_quote = false;
     for ch in chars {
-        if ch == ' ' || ch == '-' || ch == '.' {
+        if ch == ' ' || ch == '-' || ch == '.' || ch == '\'' {
             first = true;
             new_chars.push(ch);
         } else if ch == '"' && !in_quote {
@@ -73,5 +78,11 @@ mod tests {
     #[test]
     fn test_dot() {
         assert_eq!("Joe A.B. John", normalize_name("JOE A.B. JOHN", false));
+    }
+
+    #[test]
+    fn test_apostrophe() {
+        assert_eq!("Joe O'Brian", normalize_name("JOE O''BRIAN", false));
+        assert_eq!("Joe O'Brian", normalize_name("JOE O'BRIAN", false));
     }
 }
