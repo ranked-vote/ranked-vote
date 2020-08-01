@@ -1,10 +1,10 @@
 use crate::formats::read_election;
-use crate::model::election::{CandidateId, ElectionInfo, ElectionPreprocessed};
+use crate::model::election::{CandidateId, ElectionInfo, ElectionPreprocessed, NormalizedBallot};
 use crate::model::metadata::{Contest, ElectionMetadata, Jurisdiction};
-use crate::model::report::{CandidateVotes, ContestReport};
+use crate::model::report::{CandidatePairEntry, CandidatePairTable, CandidateVotes, ContestReport};
 use crate::normalizers::normalize_election;
 use crate::tabulator::{tabulate, Allocatee, TabulatorRound};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
 
 pub fn winner(rounds: &Vec<TabulatorRound>) -> CandidateId {
@@ -46,23 +46,208 @@ pub fn total_votes(rounds: &Vec<TabulatorRound>) -> Vec<CandidateVotes> {
         }
     }
 
-    let mut result: Vec<CandidateVotes> = candidate_to_initial_votes.into_iter().map(|(candidate, first_round_votes)| {
-        CandidateVotes {
+    let mut result: Vec<CandidateVotes> = candidate_to_initial_votes
+        .into_iter()
+        .map(|(candidate, first_round_votes)| CandidateVotes {
             candidate,
             first_round_votes,
             transfer_votes: candidate_to_final_votes[&candidate] - first_round_votes,
-            round_eliminated: round_eliminated.get(&candidate).cloned()
-        }
-    }).collect();
+            round_eliminated: round_eliminated.get(&candidate).cloned(),
+        })
+        .collect();
 
     result.sort_by_key(|d| -((d.first_round_votes + d.transfer_votes) as i32));
 
     result
 }
 
+pub fn generate_pairwise_preferences(
+    candidates: &Vec<CandidateId>,
+    ballots: &Vec<NormalizedBallot>,
+) -> CandidatePairTable {
+    let mut preference_map: HashMap<(CandidateId, CandidateId), u32> = HashMap::new();
+    let all_candidates: HashSet<CandidateId> = candidates.iter().map(|d| *d).collect();
+
+    for ballot in ballots {
+        let mut above_ranked: HashSet<CandidateId> = HashSet::new();
+
+        for vote in ballot.choices() {
+            for arc in &above_ranked {
+                *preference_map.entry((*arc, vote)).or_insert(0) += 1;
+            }
+
+            above_ranked.insert(vote);
+        }
+
+        let remaining = all_candidates.difference(&above_ranked);
+
+        for candidate in remaining {
+            for arc in &above_ranked {
+                *preference_map.entry((*arc, *candidate)).or_insert(0) += 1;
+            }
+        }
+    }
+
+    let axis: Vec<Allocatee> = candidates
+        .iter()
+        .map(|d| Allocatee::Candidate(*d))
+        .collect();
+
+    let entries: Vec<Vec<Option<CandidatePairEntry>>> = candidates
+        .iter()
+        .map(|c1| {
+            candidates
+                .iter()
+                .map(|c2| {
+                    let m1 = preference_map.get(&(*c1, *c2)).unwrap_or(&0);
+                    let m2 = preference_map.get(&(*c2, *c1)).unwrap_or(&0);
+                    let count = m1 + m2;
+
+                    if count == 0 {
+                        None
+                    } else {
+                        let frac = *m1 as f32 / count as f32;
+
+                        Some(CandidatePairEntry { frac, count })
+                    }
+                })
+                .collect()
+        })
+        .collect();
+
+    CandidatePairTable {
+        entries,
+        rows: axis.clone(),
+        cols: axis,
+    }
+}
+
+pub fn generate_first_alternate(
+    candidates: &Vec<CandidateId>,
+    ballots: &Vec<NormalizedBallot>,
+) -> CandidatePairTable {
+    let mut first_choice_count: HashMap<CandidateId, u32> = HashMap::new();
+    let mut alternate_map: HashMap<(CandidateId, Allocatee), u32> = HashMap::new();
+
+    for ballot in ballots {
+        let choices = ballot.choices();
+        if let Some(first) = choices.first() {
+            let second = choices
+                .get(1)
+                .map(|d| Allocatee::Candidate(*d))
+                .unwrap_or(Allocatee::Exhausted);
+            *alternate_map.entry((*first, second)).or_insert(0) += 1;
+            *first_choice_count.entry(*first).or_insert(0) += 1;
+        }
+    }
+
+    let rows: Vec<Allocatee> = candidates
+        .iter()
+        .map(|d| Allocatee::Candidate(*d))
+        .collect();
+    let mut cols = rows.clone();
+    cols.push(Allocatee::Exhausted);
+
+    let entries: Vec<Vec<Option<CandidatePairEntry>>> = candidates
+        .iter()
+        .map(|c1| {
+            let denominator = *first_choice_count.get(c1).unwrap_or(&0);
+
+            cols.iter()
+                .map(|c2| {
+                    let count = *alternate_map.get(&(*c1, *c2)).unwrap_or(&0);
+                    if count == 0 {
+                        None
+                    } else {
+                        let frac = count as f32 / denominator as f32;
+
+                        Some(CandidatePairEntry {
+                            frac,
+                            count: denominator,
+                        })
+                    }
+                })
+                .collect()
+        })
+        .collect();
+
+    CandidatePairTable {
+        entries,
+        rows,
+        cols,
+    }
+}
+
+pub fn generate_first_final(
+    candidates: &Vec<CandidateId>,
+    ballots: &Vec<NormalizedBallot>,
+    final_round_candidates: &HashSet<CandidateId>,
+) -> CandidatePairTable {
+    let mut first_final: HashMap<(CandidateId, Allocatee), u32> = HashMap::new();
+    let mut first_total: HashMap<CandidateId, u32> = HashMap::new();
+
+    for ballot in ballots {
+        let choices = ballot.choices();
+        if let Some(first) = choices.first() {
+            if !final_round_candidates.contains(first) {
+                let final_choice =
+                    match choices.iter().find(|x| final_round_candidates.contains(x)) {
+                        Some(v) => Allocatee::Candidate(*v),
+                        _ => Allocatee::Exhausted,
+                    };
+
+                *first_final.entry((*first, final_choice)).or_insert(0) += 1;
+                *first_total.entry(*first).or_insert(0) += 1;
+            }
+        }
+    }
+
+    let rows: Vec<Allocatee> = candidates
+        .iter()
+        .filter(|x| !final_round_candidates.contains(x))
+        .map(|d| Allocatee::Candidate(*d))
+        .collect();
+
+    let mut cols: Vec<Allocatee> = candidates
+        .iter()
+        .filter(|x| final_round_candidates.contains(x))
+        .map(|d| Allocatee::Candidate(*d))
+        .collect();
+    cols.push(Allocatee::Exhausted);
+
+    let entries: Vec<Vec<Option<CandidatePairEntry>>> = rows
+        .iter()
+        .map(|c1| {
+            let total = *first_total.get(&c1.candidate_id().unwrap()).unwrap();
+
+            cols.iter()
+                .map(|c2| {
+                    let count = *first_final
+                        .get(&(c1.candidate_id().unwrap(), *c2))
+                        .unwrap_or(&0);
+                    if count == 0 {
+                        None
+                    } else {
+                        let frac = count as f32 / total as f32;
+
+                        Some(CandidatePairEntry { frac, count: total })
+                    }
+                })
+                .collect()
+        })
+        .collect();
+
+    CandidatePairTable {
+        entries,
+        rows,
+        cols,
+    }
+}
+
 /// Generate a `ContestReport` from preprocessed election data.
 pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
-    let rounds = tabulate(&election.ballots.ballots);
+    let ballots = &election.ballots.ballots;
+    let rounds = tabulate(&ballots);
     let winner = winner(&rounds);
     let num_candidates = election
         .ballots
@@ -72,6 +257,19 @@ pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
         .count() as u32;
 
     let total_votes = total_votes(&rounds);
+    let candidates: Vec<CandidateId> = total_votes.iter().map(|d| d.candidate).collect();
+    let pairwise_preferences = generate_pairwise_preferences(&candidates, &ballots);
+    let first_alternate = generate_first_alternate(&candidates, &ballots);
+
+    let final_round_candidates: HashSet<CandidateId> = rounds
+        .last()
+        .unwrap()
+        .allocations
+        .iter()
+        .flat_map(|a| a.allocatee.candidate_id())
+        .collect();
+
+    let first_final = generate_first_final(&candidates, &ballots, &final_round_candidates);
 
     ContestReport {
         info: election.info.clone(),
@@ -81,6 +279,9 @@ pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
         num_candidates,
         rounds,
         total_votes,
+        pairwise_preferences,
+        first_alternate,
+        first_final,
     }
 }
 

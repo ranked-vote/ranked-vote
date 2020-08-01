@@ -1,5 +1,5 @@
 use crate::model::election::{Candidate, ElectionInfo, CandidateId};
-use crate::tabulator::TabulatorRound;
+use crate::tabulator::{TabulatorRound, Allocatee};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
@@ -40,6 +40,21 @@ pub struct CandidateVotes {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct CandidatePairEntry {
+    pub frac: f32,
+    pub count: u32,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CandidatePairTable {
+    pub rows: Vec<Allocatee>,
+    pub cols: Vec<Allocatee>,
+    pub entries: Vec<Vec<Option<CandidatePairEntry>>>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ContestReport {
     pub info: ElectionInfo,
     pub ballot_count: u32,
@@ -48,6 +63,9 @@ pub struct ContestReport {
     pub winner: CandidateId,
     pub num_candidates: u32,
     pub total_votes: Vec<CandidateVotes>,
+    pub pairwise_preferences: CandidatePairTable,
+    pub first_alternate: CandidatePairTable,
+    pub first_final: CandidatePairTable,
 }
 
 impl ContestReport {

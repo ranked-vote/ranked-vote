@@ -20,7 +20,7 @@ pub struct TabulatorAllocation {
     pub votes: u32,
 }
 
-#[derive(Clone, Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Clone, Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Debug)]
 pub enum Allocatee {
     Candidate(CandidateId),
     Exhausted,
