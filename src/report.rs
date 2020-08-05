@@ -114,9 +114,7 @@ pub fn generate_pairwise_preferences(
                     if count == 0 {
                         None
                     } else {
-                        let frac = *m1 as f32 / count as f32;
-
-                        Some(CandidatePairEntry { frac, count })
+                        Some(CandidatePairEntry::new(*m1, count))
                     }
                 })
                 .collect()
@@ -167,12 +165,7 @@ pub fn generate_first_alternate(
                     if count == 0 {
                         None
                     } else {
-                        let frac = count as f32 / denominator as f32;
-
-                        Some(CandidatePairEntry {
-                            frac,
-                            count: denominator,
-                        })
+                        Some(CandidatePairEntry::new(count, denominator))
                     }
                 })
                 .collect()
@@ -236,9 +229,7 @@ pub fn generate_first_final(
                     if count == 0 {
                         None
                     } else {
-                        let frac = count as f32 / total as f32;
-
-                        Some(CandidatePairEntry { frac, count: total })
+                        Some(CandidatePairEntry::new(count, total))
                     }
                 })
                 .collect()

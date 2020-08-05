@@ -42,7 +42,18 @@ pub struct CandidateVotes {
 #[serde(rename_all = "camelCase")]
 pub struct CandidatePairEntry {
     pub frac: f32,
-    pub count: u32,
+    pub numerator: u32,
+    pub denominator: u32,
+}
+
+impl CandidatePairEntry {
+    pub fn new(numerator: u32, denominator: u32) -> CandidatePairEntry {
+        CandidatePairEntry {
+            numerator,
+            denominator,
+            frac: (numerator as f32) / (denominator as f32)
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
