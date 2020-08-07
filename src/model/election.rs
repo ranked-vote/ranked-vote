@@ -1,3 +1,4 @@
+use crate::model::metadata::TabulationOptions;
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::BTreeMap;
@@ -42,14 +43,24 @@ impl<'de> Deserialize<'de> for CandidateId {
 }
 
 #[derive(Ord, PartialOrd, Eq, PartialEq, Clone, Serialize, Deserialize, Debug)]
+pub enum CandidateType {
+    WriteIn,
+    Regular,
+    QualifiedWriteIn,
+}
+
+#[derive(Ord, PartialOrd, Eq, PartialEq, Clone, Serialize, Deserialize, Debug)]
 pub struct Candidate {
     pub name: String,
-    pub write_in: bool,
+    pub candidate_type: CandidateType,
 }
 
 impl Candidate {
-    pub fn new(name: String, write_in: bool) -> Candidate {
-        Candidate { name, write_in }
+    pub fn new(name: String, candidate_type: CandidateType) -> Candidate {
+        Candidate {
+            name,
+            candidate_type,
+        }
     }
 }
 
@@ -143,7 +154,7 @@ pub struct ElectionInfo {
 
     pub data_format: String,
 
-    pub tabulation: String,
+    pub tabulation_options: TabulationOptions,
 
     pub jurisdiction_path: String,
 
@@ -158,6 +169,8 @@ pub struct ElectionInfo {
     pub election_name: String,
 
     pub loader_params: Option<BTreeMap<String, String>>,
+
+    pub website: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]

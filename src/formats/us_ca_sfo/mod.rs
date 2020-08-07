@@ -1,5 +1,5 @@
 use crate::formats::common::{normalize_name, CandidateMap};
-use crate::model::election::{Ballot, Candidate, Choice, Election};
+use crate::model::election::{Ballot, Candidate, CandidateType, Choice, Election};
 use crate::util::UnicodeString;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -81,9 +81,16 @@ fn read_candidates(reader: &mut dyn BufRead, contest_id: u32) -> CandidateMap<u3
 
             let candidate = if name.starts_with(WRITE_IN_PREFIX) {
                 let name = name[(WRITE_IN_PREFIX.len())..].to_string();
-                Candidate::new(name, true)
+                Candidate::new(name, CandidateType::WriteIn)
             } else {
-                Candidate::new(name, record.is_writein)
+                Candidate::new(
+                    name,
+                    if record.is_writein {
+                        CandidateType::WriteIn
+                    } else {
+                        CandidateType::Regular
+                    },
+                )
             };
             candidates.add(record.record_id, candidate);
         }

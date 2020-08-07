@@ -51,7 +51,7 @@ impl CandidatePairEntry {
         CandidatePairEntry {
             numerator,
             denominator,
-            frac: (numerator as f32) / (denominator as f32)
+            frac: (numerator as f32) / (denominator as f32),
         }
     }
 }

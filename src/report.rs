@@ -1,5 +1,7 @@
 use crate::formats::read_election;
-use crate::model::election::{CandidateId, ElectionInfo, ElectionPreprocessed, NormalizedBallot};
+use crate::model::election::{
+    CandidateId, CandidateType, ElectionInfo, ElectionPreprocessed, NormalizedBallot,
+};
 use crate::model::metadata::{Contest, ElectionMetadata, Jurisdiction};
 use crate::model::report::{CandidatePairEntry, CandidatePairTable, CandidateVotes, ContestReport};
 use crate::normalizers::normalize_election;
@@ -294,7 +296,7 @@ pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
         .ballots
         .candidates
         .iter()
-        .filter(|d| !d.write_in)
+        .filter(|d| d.candidate_type != CandidateType::WriteIn)
         .count() as u32;
 
     let total_votes = total_votes(&rounds);
@@ -368,13 +370,14 @@ pub fn preprocess_election(
             office: contest.office.clone(),
             date: metadata.date.clone(),
             data_format: metadata.data_format.clone(),
-            tabulation: metadata.tabulation.clone(),
+            tabulation_options: metadata.tabulation_options.clone().unwrap_or_default(),
             loader_params: contest.loader_params.clone(),
             jurisdiction_path: ec.path.clone(),
             election_path: election_path.to_string(),
             jurisdiction_name: ec.name.clone(),
             office_name: office.name.clone(),
             election_name: metadata.name.clone(),
+            website: metadata.website.clone(),
         },
         ballots: normalized_election,
     }

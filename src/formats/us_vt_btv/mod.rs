@@ -1,4 +1,4 @@
-use crate::model::election::{Ballot, Candidate, CandidateId, Choice, Election};
+use crate::model::election::{Ballot, Candidate, CandidateId, CandidateType, Choice, Election};
 use regex::Regex;
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -75,7 +75,7 @@ pub fn btv_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Elect
             let name: String = caps.get(2).unwrap().as_str().into();
             assert_eq!(id - 1, candidates.len() as u32);
 
-            candidates.push(Candidate::new(name, false));
+            candidates.push(Candidate::new(name, CandidateType::Regular));
         } else if let Some(caps) = ballot_rx.captures(&line) {
             let id: &str = caps.get(1).unwrap().as_str();
             let votes: &str = caps.get(2).unwrap().as_str();

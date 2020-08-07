@@ -2,7 +2,7 @@ pub mod model;
 
 use crate::formats::common::{normalize_name, CandidateMap};
 use crate::formats::nist_sp_1500::model::{CandidateManifest, CandidateType, CvrExport};
-use crate::model::election::{Ballot, Candidate, Choice, Election};
+use crate::model::election::{self, Ballot, Candidate, Choice, Election};
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
@@ -11,6 +11,7 @@ use std::path::Path;
 struct ReaderOptions {
     cvr: String,
     contest: u32,
+    drop_unqualified_write_in: bool,
 }
 
 impl ReaderOptions {
@@ -24,32 +25,59 @@ impl ReaderOptions {
             .expect("nist_sp_1500 elections should have contest parameter.")
             .parse()
             .expect("contest param should be a number.");
+        let drop_unqualified_write_in: bool = params
+            .get("dropUnqualifiedWriteIn")
+            .map(|d| d.parse().unwrap())
+            .unwrap_or(false);
 
-        ReaderOptions { contest, cvr }
+        ReaderOptions {
+            contest,
+            cvr,
+            drop_unqualified_write_in,
+        }
     }
 }
 
-fn get_candidates(manifest: &CandidateManifest, contest_id: u32) -> CandidateMap<u32> {
+fn get_candidates(
+    manifest: &CandidateManifest,
+    contest_id: u32,
+    drop_unqualified_write_in: bool,
+) -> (CandidateMap<u32>, Option<u32>) {
     let mut map = CandidateMap::new();
+    let mut write_in_external_id = None;
 
     for candidate in &manifest.list {
         if candidate.contest_id == contest_id {
-            let write_in = match candidate.candidate_type {
-                CandidateType::WriteIn => true,
-                CandidateType::QualifiedWriteIn => true,
-                _ => false,
+            let candidate_type = match candidate.candidate_type {
+                CandidateType::WriteIn => election::CandidateType::WriteIn,
+                CandidateType::QualifiedWriteIn => election::CandidateType::QualifiedWriteIn,
+                CandidateType::Regular => election::CandidateType::Regular,
             };
+
+            if drop_unqualified_write_in && candidate_type == election::CandidateType::WriteIn {
+                write_in_external_id = Some(candidate.id);
+                continue;
+            }
+
             map.add(
                 candidate.id,
-                Candidate::new(normalize_name(&candidate.description, false), write_in),
+                Candidate::new(
+                    normalize_name(&candidate.description, false),
+                    candidate_type,
+                ),
             );
         }
     }
 
-    map
+    (map, write_in_external_id)
 }
 
-fn get_ballots(cvr: &CvrExport, contest_id: u32, map: &CandidateMap<u32>) -> Vec<Ballot> {
+fn get_ballots(
+    cvr: &CvrExport,
+    contest_id: u32,
+    map: &CandidateMap<u32>,
+    dropped_write_in: Option<u32>,
+) -> Vec<Ballot> {
     let mut ballots: Vec<Ballot> = Vec::new();
 
     for session in &cvr.sessions {
@@ -59,6 +87,8 @@ fn get_ballots(cvr: &CvrExport, contest_id: u32, map: &CandidateMap<u32>) -> Vec
                 for mark in &contest.marks {
                     let choice = if mark.is_ambiguous {
                         Choice::Overvote
+                    } else if Some(mark.candidate_id) == dropped_write_in {
+                        Choice::Undervote // Unqualified write-in treated as undervote.
                     } else {
                         map.id_to_choice(mark.candidate_id)
                     };
@@ -85,7 +115,11 @@ pub fn nist_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Elec
         serde_json::from_reader(reader).unwrap()
     };
 
-    let candidates = get_candidates(&candidate_manifest, options.contest);
+    let (candidates, dropped_write_in) = get_candidates(
+        &candidate_manifest,
+        options.contest,
+        options.drop_unqualified_write_in,
+    );
 
     let cvr: CvrExport = {
         let file = archive.by_name("CvrExport.json").unwrap();
@@ -93,7 +127,7 @@ pub fn nist_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Elec
         serde_json::from_reader(reader).unwrap()
     };
 
-    let ballots = get_ballots(&cvr, options.contest, &candidates);
+    let ballots = get_ballots(&cvr, options.contest, &candidates, dropped_write_in);
 
     Election::new(candidates.to_vec(), ballots)
 }

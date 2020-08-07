@@ -1,5 +1,5 @@
 use crate::formats::common::{normalize_name, CandidateMap};
-use crate::model::election::{Ballot, Candidate, Choice, Election};
+use crate::model::election::{Ballot, Candidate, CandidateType, Choice, Election};
 use calamine::{open_workbook_auto, DataType, Reader};
 use regex::Regex;
 use std::collections::BTreeMap;
@@ -41,7 +41,7 @@ pub fn parse_choice(candidate: &str, candidate_map: &mut CandidateMap<String>) -
 
         candidate_map.add_id_to_choice(
             candidate.to_string(),
-            Candidate::new(normalize_name(candidate, true), false),
+            Candidate::new(normalize_name(candidate, true), CandidateType::Regular),
         )
     }
 }

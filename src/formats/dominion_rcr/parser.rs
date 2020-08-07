@@ -1,5 +1,5 @@
 use crate::formats::common::normalize_name;
-use crate::model::election::{Ballot, Candidate, CandidateId, Choice, Election};
+use crate::model::election::{Ballot, Candidate, CandidateId, CandidateType, Choice, Election};
 use nom::{
     character::complete::char, character::complete::digit1, character::complete::line_ending,
     character::complete::not_line_ending, character::complete::tab, combinator::all_consuming,
@@ -36,7 +36,10 @@ fn parse_header(i: &str) -> IResult<&str, RcrHeader> {
 
 fn candidate(i: &str) -> IResult<&str, Candidate> {
     let (i, name) = terminated(not_line_ending, line_ending)(i)?;
-    Ok((i, Candidate::new(normalize_name(name, false), false)))
+    Ok((
+        i,
+        Candidate::new(normalize_name(name, false), CandidateType::Regular),
+    ))
 }
 
 fn numbered(i: &str) -> IResult<&str, ()> {

@@ -36,7 +36,7 @@ pub struct ElectionMetadata {
 
     pub data_format: String,
 
-    pub tabulation: String,
+    pub tabulation_options: Option<TabulationOptions>,
 
     pub normalization: String,
 
@@ -47,10 +47,21 @@ pub struct ElectionMetadata {
     pub website: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TabulationOptions {
+    pub eager: Option<bool>,
+}
+
+impl Default for TabulationOptions {
+    fn default() -> Self {
+        TabulationOptions { eager: Some(true) }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Contest {
     pub office: String,
     pub loader_params: Option<BTreeMap<String, String>>,
-    pub candidates: Option<BTreeMap<String, String>>,
 }
