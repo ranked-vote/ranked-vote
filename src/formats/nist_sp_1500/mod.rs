@@ -1,11 +1,13 @@
 pub mod model;
 
 use crate::formats::common::{normalize_name, CandidateMap};
-use crate::formats::nist_sp_1500::model::{CandidateManifest, CandidateType, CvrExport};
+use crate::formats::nist_sp_1500::model::{CandidateManifest, CandidateType, CvrExport, Mark};
 use crate::model::election::{self, Ballot, Candidate, Choice, Election};
+use itertools::Itertools;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufReader;
+
 use std::path::Path;
 
 struct ReaderOptions {
@@ -84,14 +86,22 @@ fn get_ballots(
         for contest in &session.contests() {
             if contest.id == contest_id {
                 let mut choices: Vec<Choice> = Vec::new();
-                for mark in &contest.marks {
-                    let choice = if mark.is_ambiguous {
-                        Choice::Overvote
-                    } else if Some(mark.candidate_id) == dropped_write_in {
-                        Choice::Undervote // Unqualified write-in treated as undervote.
-                    } else {
-                        map.id_to_choice(mark.candidate_id)
+                for (_, marks) in &contest.marks.iter().group_by(|x| x.rank) {
+                    let marks: Vec<&Mark> = marks.filter(|d| !d.is_ambiguous).collect();
+
+                    let choice = match marks.as_slice() {
+                        [v] if Some(v.candidate_id) == dropped_write_in => {
+                            // The standard way of handling write-ins with CVR files seems to
+                            // be that write-in candidates who reach a certain threshold are
+                            // promoted to "QualifiedWriteIn" type. For tabulation, unqualified
+                            // write-in candidates are dropped by treating them as undervotes.
+                            Choice::Undervote
+                        }
+                        [v] => map.id_to_choice(v.candidate_id),
+                        [] => Choice::Undervote,
+                        _ => Choice::Overvote,
                     };
+
                     choices.push(choice);
                 }
 
