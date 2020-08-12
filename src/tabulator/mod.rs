@@ -20,6 +20,7 @@ impl Allocations {
     }
 
     /// Returns true if a winner can be declared from this allocation.
+    #[allow(unused)]
     pub fn is_final(&self) -> bool {
         match self.votes.first() {
             Some((_, first_votes)) => {
@@ -137,11 +138,13 @@ impl TabulatorState {
             let mut ai = allocations.votes.iter();
             let mut remaining_votes = allocations.continuing();
 
+            let mut i = 0;
             while let Some((_, votes)) = ai.next() {
                 remaining_votes -= votes;
-                if votes > &remaining_votes {
+                if votes > &remaining_votes && i > 0 {
                     break;
                 }
+                i += 1;
             }
 
             ai.map(|d| d.0).collect()
@@ -229,7 +232,7 @@ pub fn tabulate(ballots: &Vec<NormalizedBallot>) -> Vec<TabulatorRound> {
         let allocations = state.allocations();
         rounds.push(state.as_round());
 
-        if allocations.is_final() {
+        if allocations.votes.len() <= 2 {
             break;
         }
 
