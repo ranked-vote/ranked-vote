@@ -18,15 +18,24 @@ pub struct Session {
     pub record_id: u32,
     counting_group_id: u32,
     image_mask: String,
-    original: SessionOriginal,
+    original: SessionBallot,
+    modified: Option<SessionBallot>,
 }
 
 impl Session {
+    pub fn ballot(&self) -> &SessionBallot {
+        if let Some(ballot) = &self.modified {
+            &ballot
+        } else {
+            &self.original
+        }
+    }
+
     pub fn contests(&self) -> Vec<ContestMarks> {
         match &self.original.contests {
             Some(c) => (*c).clone(),
             None => self
-                .original
+                .ballot()
                 .cards
                 .as_ref()
                 .unwrap()
@@ -39,7 +48,7 @@ impl Session {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct SessionOriginal {
+pub struct SessionBallot {
     precinct_portion_id: u32,
     ballot_type_id: u32,
     is_current: bool,

@@ -10,7 +10,7 @@ use colored::*;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
 
-pub fn winner(rounds: &Vec<TabulatorRound>) -> CandidateId {
+pub fn winner(rounds: &[TabulatorRound]) -> CandidateId {
     rounds
         .last()
         .unwrap()
@@ -22,7 +22,7 @@ pub fn winner(rounds: &Vec<TabulatorRound>) -> CandidateId {
         .unwrap()
 }
 
-pub fn total_votes(rounds: &Vec<TabulatorRound>) -> Vec<CandidateVotes> {
+pub fn total_votes(rounds: &[TabulatorRound]) -> Vec<CandidateVotes> {
     let candidate_to_initial_votes: BTreeMap<CandidateId, u32> = rounds[0]
         .allocations
         .iter()
@@ -65,8 +65,8 @@ pub fn total_votes(rounds: &Vec<TabulatorRound>) -> Vec<CandidateVotes> {
 }
 
 pub fn generate_pairwise_counts(
-    candidates: &Vec<CandidateId>,
-    ballots: &Vec<NormalizedBallot>,
+    candidates: &[CandidateId],
+    ballots: &[NormalizedBallot],
 ) -> HashMap<(CandidateId, CandidateId), u32> {
     let mut preference_map: HashMap<(CandidateId, CandidateId), u32> = HashMap::new();
     let all_candidates: HashSet<CandidateId> = candidates.iter().copied().collect();
@@ -95,7 +95,7 @@ pub fn generate_pairwise_counts(
 }
 
 pub fn generate_pairwise_preferences(
-    candidates: &Vec<CandidateId>,
+    candidates: &[CandidateId],
     preference_map: &HashMap<(CandidateId, CandidateId), u32>,
 ) -> CandidatePairTable {
     let axis: Vec<Allocatee> = candidates
@@ -131,8 +131,8 @@ pub fn generate_pairwise_preferences(
 }
 
 pub fn generate_first_alternate(
-    candidates: &Vec<CandidateId>,
-    ballots: &Vec<NormalizedBallot>,
+    candidates: &[CandidateId],
+    ballots: &[NormalizedBallot],
 ) -> CandidatePairTable {
     let mut first_choice_count: HashMap<CandidateId, u32> = HashMap::new();
     let mut alternate_map: HashMap<(CandidateId, Allocatee), u32> = HashMap::new();
@@ -182,8 +182,8 @@ pub fn generate_first_alternate(
 }
 
 pub fn generate_first_final(
-    candidates: &Vec<CandidateId>,
-    ballots: &Vec<NormalizedBallot>,
+    candidates: &[CandidateId],
+    ballots: &[NormalizedBallot],
     final_round_candidates: &HashSet<CandidateId>,
 ) -> CandidatePairTable {
     let mut first_final: HashMap<(CandidateId, Allocatee), u32> = HashMap::new();
@@ -246,7 +246,7 @@ pub fn generate_first_final(
 }
 
 pub fn graph(
-    candidates: &Vec<CandidateId>,
+    candidates: &[CandidateId],
     preference_map: &HashMap<(CandidateId, CandidateId), u32>,
 ) -> HashMap<CandidateId, Vec<CandidateId>> {
     let mut graph = HashMap::new();
@@ -257,7 +257,7 @@ pub fn graph(
             let c2v = preference_map.get(&(*c2, *c1)).unwrap_or(&0);
 
             if c1v > c2v {
-                graph.entry(*c2).or_insert_with(|| Vec::new()).push(*c1);
+                graph.entry(*c2).or_insert_with(Vec::new).push(*c1);
             }
         }
     }
@@ -266,7 +266,7 @@ pub fn graph(
 }
 
 pub fn smith_set(
-    candidates: &Vec<CandidateId>,
+    candidates: &[CandidateId],
     graph: &HashMap<CandidateId, Vec<CandidateId>>,
 ) -> HashSet<CandidateId> {
     let mut last_set: HashSet<CandidateId> = candidates.iter().cloned().collect();
@@ -274,10 +274,10 @@ pub fn smith_set(
     loop {
         let this_set: HashSet<CandidateId> = last_set
             .iter()
-            .flat_map(|d| graph.get(d).cloned().unwrap_or(Vec::new()))
+            .flat_map(|d| graph.get(d).cloned().unwrap_or_default())
             .collect();
 
-        if this_set.len() == 0 || this_set == last_set {
+        if this_set.is_empty() || this_set == last_set {
             break;
         }
 

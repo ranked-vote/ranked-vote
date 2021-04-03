@@ -3,6 +3,7 @@ pub mod model;
 use crate::formats::common::{normalize_name, CandidateMap};
 use crate::formats::nist_sp_1500::model::{CandidateManifest, CandidateType, CvrExport, Mark};
 use crate::model::election::{self, Ballot, Candidate, Choice, Election};
+use colored::*;
 use itertools::Itertools;
 use std::collections::BTreeMap;
 use std::fs::File;
@@ -78,6 +79,7 @@ fn get_ballots(
     cvr: &CvrExport,
     contest_id: u32,
     map: &CandidateMap<u32>,
+    filename: &str,
     dropped_write_in: Option<u32>,
 ) -> Vec<Ballot> {
     let mut ballots: Vec<Ballot> = Vec::new();
@@ -105,7 +107,10 @@ fn get_ballots(
                     choices.push(choice);
                 }
 
-                ballots.push(Ballot::new(session.record_id.to_string(), choices));
+                ballots.push(Ballot::new(
+                    format!("{}:{}", filename, session.record_id),
+                    choices,
+                ));
             }
         }
     }
@@ -131,13 +136,27 @@ pub fn nist_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Elec
         options.drop_unqualified_write_in,
     );
 
-    let cvr: CvrExport = {
-        let file = archive.by_name("CvrExport.json").unwrap();
-        let reader = BufReader::new(file);
-        serde_json::from_reader(reader).unwrap()
-    };
+    let mut ballots: Vec<Ballot> = Default::default();
+    let filenames: Vec<String> = archive.file_names().map(|d| d.to_string()).collect();
 
-    let ballots = get_ballots(&cvr, options.contest, &candidates, dropped_write_in);
+    for filename in filenames {
+        if filename.starts_with("CvrExport") {
+            eprintln!("Reading CVR file: {}", filename.green());
+            let file = archive.by_name(&filename).unwrap();
+            let reader = BufReader::new(file);
+            let cvr = serde_json::from_reader(reader).unwrap();
+            let extra_ballots = get_ballots(
+                &cvr,
+                options.contest,
+                &candidates,
+                &filename,
+                dropped_write_in,
+            );
+            ballots.extend(extra_ballots);
+        }
+    }
 
-    Election::new(candidates.to_vec(), ballots)
+    eprintln!("Read {} ballots", ballots.len().to_string().blue());
+
+    Election::new(candidates.into_vec(), ballots)
 }

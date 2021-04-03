@@ -14,7 +14,7 @@ impl ReaderOptions {
         let files: Vec<String> = params
             .get("files")
             .unwrap()
-            .split(";")
+            .split(';')
             .map(|x| x.to_string())
             .collect();
 
@@ -78,5 +78,5 @@ pub fn maine_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Ele
         }
     }
 
-    Election::new(candidate_map.to_vec(), ballots)
+    Election::new(candidate_map.into_vec(), ballots)
 }

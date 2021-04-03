@@ -26,7 +26,7 @@ impl ReaderOptions {
 }
 
 pub fn parse_ballot(source: &str) -> Vec<Choice> {
-    if source == "" {
+    if source.is_empty() {
         return vec![];
     }
 
@@ -34,7 +34,7 @@ pub fn parse_ballot(source: &str) -> Vec<Choice> {
     let mut choices = Vec::new();
 
     for rank in ranks {
-        let choice = if rank.contains("=") {
+        let choice = if rank.contains('=') {
             Choice::Overvote
         } else if let Some(candidate_id) = rank.strip_prefix("C") {
             let candidate_id: u32 = candidate_id.parse().unwrap();

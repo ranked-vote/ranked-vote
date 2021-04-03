@@ -25,9 +25,9 @@ impl MasterRecord {
     fn parse(input: &str) -> MasterRecord {
         let input = UnicodeString::new(input);
         MasterRecord {
-            record_type: input.slice(0..10).trim().clone().into(),
+            record_type: input.slice(0..10).trim().to_string(),
             record_id: input.slice(10..17).parse().unwrap(),
-            description: input.slice(17..67).trim().clone().into(),
+            description: input.slice(17..67).trim().to_string(),
             _list_order: input.slice(67..74).parse().unwrap(),
             contest_id: input.slice(74..81).parse().unwrap(),
             is_writein: &input.slice(81..82) == "1",
@@ -79,9 +79,8 @@ fn read_candidates(reader: &mut dyn BufRead, contest_id: u32) -> CandidateMap<u3
             }
             let name = normalize_name(&record.description, false);
 
-            let candidate = if name.starts_with(WRITE_IN_PREFIX) {
-                let name = name[(WRITE_IN_PREFIX.len())..].to_string();
-                Candidate::new(name, CandidateType::WriteIn)
+            let candidate = if let Some(name) = name.strip_prefix(WRITE_IN_PREFIX) {
+                Candidate::new(name.to_string(), CandidateType::WriteIn)
             } else {
                 Candidate::new(
                     name,
@@ -98,7 +97,7 @@ fn read_candidates(reader: &mut dyn BufRead, contest_id: u32) -> CandidateMap<u3
     candidates
 }
 
-fn read_ballots<'a>(
+fn read_ballots(
     reader: &mut dyn BufRead,
     candidates: &CandidateMap<u32>,
     contest: u32,
@@ -155,7 +154,7 @@ impl ReaderOptions {
             .get("ballotImage")
             .expect("SFO elections should have ballotImage parameter.")
             .clone();
-        let zip_file = params.get("zipFile").map(|d| d.clone());
+        let zip_file = params.get("zipFile").cloned();
 
         ReaderOptions {
             contest,
@@ -187,12 +186,12 @@ pub fn sfo_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Elect
         (candidates, ballots)
     } else {
         let mut master_reader = BufReader::new(File::open(path.join(options.master_file)).unwrap());
-        let mut candidates = read_candidates(&mut master_reader, options.contest);
+        let candidates = read_candidates(&mut master_reader, options.contest);
 
         let mut ballot_reader = BufReader::new(File::open(path.join(options.ballot_file)).unwrap());
-        let ballots = read_ballots(&mut ballot_reader, &mut candidates, options.contest);
+        let ballots = read_ballots(&mut ballot_reader, &candidates, options.contest);
         (candidates, ballots)
     };
 
-    Election::new(candidates.to_vec(), ballots)
+    Election::new(candidates.into_vec(), ballots)
 }

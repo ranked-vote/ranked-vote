@@ -28,13 +28,12 @@ pub fn sync(meta_dir: &str, raw_dir: &str) {
                 create_dir_all(election_path.clone()).unwrap();
             }
 
-            let mut expected_files: HashSet<String> =
-                election.files.keys().map(|x| x.clone()).collect();
+            let mut expected_files: HashSet<String> = election.files.keys().cloned().collect();
 
             for entry in fs::read_dir(election_path).unwrap() {
                 let entry = entry.unwrap();
                 let filename = String::from(entry.file_name().to_str().unwrap());
-                if filename.starts_with(".") {
+                if filename.starts_with('.') {
                     continue;
                 };
                 if !expected_files.remove(&filename) {
@@ -46,7 +45,7 @@ pub fn sync(meta_dir: &str, raw_dir: &str) {
                     let hash_str = hash_file(entry.path());
                     eprintln!("Hash: {}", hash_str.green());
 
-                    election.files.insert(filename.into(), hash_str);
+                    election.files.insert(filename, hash_str);
                 }
             }
 

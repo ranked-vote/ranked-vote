@@ -1,10 +1,10 @@
 mod common;
 mod dominion_rcr;
 mod nist_sp_1500;
+mod simple_json;
 mod us_ca_sfo;
 mod us_me;
 mod us_vt_btv;
-mod simple_json;
 
 use crate::model::election::Election;
 use std::collections::BTreeMap;

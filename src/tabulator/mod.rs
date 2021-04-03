@@ -32,7 +32,7 @@ impl Allocations {
     }
 
     /// Turn into a `TabulatorAllocation` vector.
-    pub fn to_vec(self) -> Vec<TabulatorAllocation> {
+    pub fn into_vec(self) -> Vec<TabulatorAllocation> {
         let mut v = Vec::with_capacity(self.votes.len() + 1);
         for (id, votes) in self.votes {
             v.push(TabulatorAllocation {
@@ -85,7 +85,7 @@ impl TabulatorState {
         let continuing_ballots = allocations.continuing();
 
         TabulatorRound {
-            allocations: allocations.to_vec(),
+            allocations: allocations.into_vec(),
             undervote,
             overvote,
             continuing_ballots,
@@ -93,13 +93,13 @@ impl TabulatorState {
         }
     }
 
-    pub fn new(ballots: &Vec<NormalizedBallot>) -> TabulatorState {
+    pub fn new(ballots: &[NormalizedBallot]) -> TabulatorState {
         let mut allocations: BTreeMap<Choice, Vec<NormalizedBallot>> = BTreeMap::new();
         for ballot in ballots {
             let choice = ballot.top_vote();
             allocations
                 .entry(choice)
-                .or_insert_with(|| Vec::new())
+                .or_insert_with(Vec::new)
                 .push(ballot.clone());
         }
         TabulatorState {
@@ -184,7 +184,7 @@ impl TabulatorState {
 
                 candidate_ballots
                     .entry(new_choice)
-                    .or_insert_with(|| Vec::new())
+                    .or_insert_with(Vec::new)
                     .push(ballot.clone());
 
                 *transfer_map
@@ -224,7 +224,7 @@ impl TabulatorState {
     }
 }
 
-pub fn tabulate(ballots: &Vec<NormalizedBallot>) -> Vec<TabulatorRound> {
+pub fn tabulate(ballots: &[NormalizedBallot]) -> Vec<TabulatorRound> {
     let mut state = TabulatorState::new(ballots);
     let mut rounds = Vec::new();
 

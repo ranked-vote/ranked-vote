@@ -19,6 +19,6 @@ pub fn normalize_election(format: &str, election: Election) -> NormalizedElectio
 
     NormalizedElection {
         candidates: election.candidates,
-        ballots: ballots,
+        ballots,
     }
 }

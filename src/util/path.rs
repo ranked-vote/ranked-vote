@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 /// Crawl a directory tree, appending non-hidden files encountered to
 /// a passed mutable `result` vector.
 fn walk_path(path: &Path, result: &mut Vec<PathBuf>) -> io::Result<()> {
-    if path.file_name().unwrap().to_str().unwrap().starts_with(".") {
+    if path.file_name().unwrap().to_str().unwrap().starts_with('.') {
         // Don't recurse into private directories.
         return Ok(());
     }
@@ -28,6 +28,6 @@ pub fn get_files_from_path(path: &Path) -> io::Result<Vec<PathBuf>> {
         walk_path(path, &mut v)?;
         Ok(v)
     } else {
-        panic!(format!("Path {} does not exist.", path.to_string_lossy()))
+        panic!("Path {} does not exist.", path.to_string_lossy())
     }
 }

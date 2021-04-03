@@ -63,5 +63,5 @@ pub fn json_reader(path: &Path, params: BTreeMap<String, String>) -> Election {
         })
         .collect();
 
-    Election::new(candidate_map.to_vec(), ballots)
+    Election::new(candidate_map.into_vec(), ballots)
 }

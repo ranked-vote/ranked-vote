@@ -48,7 +48,7 @@ impl<ExternalCandidateId: Eq + Hash + Clone + Debug> CandidateMap<ExternalCandid
         Choice::Vote(*index)
     }
 
-    pub fn to_vec(self) -> Vec<Candidate> {
+    pub fn into_vec(self) -> Vec<Candidate> {
         self.candidates
     }
 }

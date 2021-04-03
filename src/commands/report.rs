@@ -25,10 +25,12 @@ pub fn report(
             let mut contest_index_entries: Vec<ContestIndexEntry> = Vec::new();
             eprintln!("Election: {}", election_path.red());
             for contest in &election.contests {
-                let office = jurisdiction.offices.get(&contest.office).expect(&format!(
-                    "Expected office {} to be in offices.",
-                    &contest.office
-                ));
+                let office = jurisdiction
+                    .offices
+                    .get(&contest.office)
+                    .unwrap_or_else(|| {
+                        panic!("Expected office {} to be in offices.", &contest.office)
+                    });
                 eprintln!("Office: {}", office.name.red());
 
                 let report_path = Path::new(report_dir)

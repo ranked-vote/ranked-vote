@@ -12,7 +12,7 @@ pub fn info(meta_dir: &str) {
             eprintln!("  Name: {}", election.name.blue());
             eprintln!("  Date: {}", election.date.blue());
 
-            for (file, _) in &election.files {
+            for file in election.files.keys() {
                 eprintln!("    File: {}", file.blue());
             }
         }
