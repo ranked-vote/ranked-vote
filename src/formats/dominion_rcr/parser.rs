@@ -3,7 +3,7 @@ use crate::model::election::{Ballot, Candidate, CandidateId, CandidateType, Choi
 use nom::{
     character::complete::char, character::complete::digit1, character::complete::line_ending,
     character::complete::not_line_ending, character::complete::tab, combinator::all_consuming,
-    multi::count, multi::separated_nonempty_list, sequence::terminated, IResult,
+    multi::count, multi::separated_list1, sequence::terminated, IResult,
 };
 
 pub fn unsigned_int(i: &str) -> IResult<&str, u32> {
@@ -13,6 +13,7 @@ pub fn unsigned_int(i: &str) -> IResult<&str, u32> {
 }
 
 struct RcrHeader {
+    #[allow(unused)]
     pub num_seats: u32,
     pub num_candidates: u32,
     pub num_precincts: u32,
@@ -61,7 +62,7 @@ fn choice(i: &str) -> IResult<&str, Choice> {
 }
 
 fn ballot_entry(i: &str) -> IResult<&str, Choice> {
-    let (i, choices) = separated_nonempty_list(char('='), choice)(i)?;
+    let (i, choices) = separated_list1(char('='), choice)(i)?;
     let choice = match choices.as_slice() {
         [choice] => *choice,
         _ => Choice::Overvote,
@@ -75,7 +76,7 @@ fn ballot(i: &str) -> IResult<&str, (u32, Vec<Choice>)> {
     let (i, _counting_group) = terminated(unsigned_int, tab)(i)?;
     let (i, ballot_count) = terminated(unsigned_int, tab)(i)?;
 
-    let (i, choices) = separated_nonempty_list(tab, ballot_entry)(i)?;
+    let (i, choices) = separated_list1(tab, ballot_entry)(i)?;
 
     Ok((i, (ballot_count, choices)))
 }
@@ -91,8 +92,7 @@ pub fn parse_rcr_file(i: &str) -> IResult<&str, Election> {
     let (i, _) = count(numbered, header.num_precincts as usize)(i)?;
     let (i, _) = count(numbered, header.num_counting_groups as usize)(i)?;
 
-    let (i, agg_ballots) =
-        terminated(separated_nonempty_list(line_ending, ballot), line_ending)(i)?;
+    let (i, agg_ballots) = terminated(separated_list1(line_ending, ballot), line_ending)(i)?;
 
     let mut ballots: Vec<Ballot> = Vec::new();
 

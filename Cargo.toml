@@ -37,7 +37,7 @@ regex = "1"
 lazy_static = "1.4.0"
 
 # Nom for parsing certain formats.
-nom = "5"
+nom = "6"
 
 # Excel file reader for certain formats.
 calamine = "0.16.1"
