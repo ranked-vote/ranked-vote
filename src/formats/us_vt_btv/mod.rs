@@ -36,7 +36,7 @@ pub fn parse_ballot(source: &str) -> Vec<Choice> {
     for rank in ranks {
         let choice = if rank.contains('=') {
             Choice::Overvote
-        } else if let Some(candidate_id) = rank.strip_prefix("C") {
+        } else if let Some(candidate_id) = rank.strip_prefix('C') {
             let candidate_id: u32 = candidate_id.parse().unwrap();
             Choice::Vote(CandidateId(candidate_id - 1))
         } else {

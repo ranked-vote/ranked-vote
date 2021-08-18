@@ -32,7 +32,7 @@ pub fn parse_choice(candidate: &str, candidate_map: &mut CandidateMap<String>) -
             static ref CANDIDATE_RX: Regex =
                 Regex::new(r#"(?:DEM |REP )?([^\(]*[^ \()])(?: +\(\d+\))?"#).unwrap();
         }
-        let candidate = if let Some(c) = CANDIDATE_RX.captures(&candidate) {
+        let candidate = if let Some(c) = CANDIDATE_RX.captures(candidate) {
             c.get(1).unwrap().as_str()
         } else {
             eprintln!("not matched: {}", candidate);

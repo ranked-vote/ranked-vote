@@ -290,7 +290,7 @@ pub fn smith_set(
 /// Generate a `ContestReport` from preprocessed election data.
 pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
     let ballots = &election.ballots.ballots;
-    let rounds = tabulate(&ballots);
+    let rounds = tabulate(ballots);
     let winner = winner(&rounds);
     let num_candidates = election
         .ballots
@@ -303,7 +303,7 @@ pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
     let candidates: Vec<CandidateId> = total_votes.iter().map(|d| d.candidate).collect();
 
     let pairwise_counts: HashMap<(CandidateId, CandidateId), u32> =
-        generate_pairwise_counts(&candidates, &ballots);
+        generate_pairwise_counts(&candidates, ballots);
 
     let pairwise_preferences = generate_pairwise_preferences(&candidates, &pairwise_counts);
     let graph = graph(&candidates, &pairwise_counts);
@@ -318,7 +318,7 @@ pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
         eprintln!("{}", "Non-condorcet!".purple());
     }
 
-    let first_alternate = generate_first_alternate(&candidates, &ballots);
+    let first_alternate = generate_first_alternate(&candidates, ballots);
 
     let final_round_candidates: HashSet<CandidateId> = rounds
         .last()
@@ -328,7 +328,7 @@ pub fn generate_report(election: &ElectionPreprocessed) -> ContestReport {
         .flat_map(|a| a.allocatee.candidate_id())
         .collect();
 
-    let first_final = generate_first_final(&candidates, &ballots, &final_round_candidates);
+    let first_final = generate_first_final(&candidates, ballots, &final_round_candidates);
 
     ContestReport {
         info: election.info.clone(),

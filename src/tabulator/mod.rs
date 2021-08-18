@@ -138,13 +138,11 @@ impl TabulatorState {
             let mut ai = allocations.votes.iter();
             let mut remaining_votes = allocations.continuing();
 
-            let mut i = 0;
-            while let Some((_, votes)) = ai.next() {
+            for (i, (_, votes)) in (&mut ai).enumerate() {
                 remaining_votes -= votes;
                 if votes > &remaining_votes && i > 0 {
                     break;
                 }
-                i += 1;
             }
 
             ai.map(|d| d.0).collect()

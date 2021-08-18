@@ -25,7 +25,7 @@ pub struct Session {
 impl Session {
     pub fn ballot(&self) -> &SessionBallot {
         if let Some(ballot) = &self.modified {
-            &ballot
+            ballot
         } else {
             &self.original
         }
