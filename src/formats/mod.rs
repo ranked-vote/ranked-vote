@@ -5,6 +5,7 @@ mod simple_json;
 mod us_ca_sfo;
 mod us_me;
 mod us_vt_btv;
+mod us_ny_nyc;
 
 use crate::model::election::Election;
 use std::collections::BTreeMap;
@@ -20,6 +21,7 @@ pub fn get_reader_for_format(format: &str) -> &'static BallotReader {
         "dominion_rcr" => &dominion_rcr::dominion_rcr_ballot_reader,
         "us_me" => &us_me::maine_ballot_reader,
         "simple_json" => &simple_json::json_reader,
+        "us_ny_nyc" => &us_ny_nyc::nyc_ballot_reader,
         _ => panic!("The format {} is not implemented.", format),
     }
 }

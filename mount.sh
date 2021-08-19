@@ -17,8 +17,8 @@ else
 fi
 
 mkdir -p raw-data
-s3fs -o use_path_request_style raw.ranked.vote raw-data
+s3fs -o umask=0007 -o use_path_request_style raw.ranked.vote raw-data
 
 mkdir -p preprocessed
-s3fs -o use_path_request_style data.ranked.vote preprocessed
+s3fs -o umask=0007 -o use_path_request_style data.ranked.vote preprocessed
 
