@@ -1,9 +1,9 @@
-use crate::formats::common::{CandidateMap};
+use crate::formats::common::CandidateMap;
 use crate::model::election::{Ballot, Candidate, CandidateType, Choice, Election};
 use calamine::{open_workbook_auto, Reader, Sheets};
 use regex::Regex;
 use std::collections::{BTreeMap, HashMap};
-use std::fs::{read_dir};
+use std::fs::read_dir;
 use std::path::Path;
 
 struct ReaderOptions {
@@ -112,7 +112,10 @@ pub fn nyc_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Elect
                 } else if value == "overvote" {
                     Choice::Overvote
                 } else if value == "Write-in" {
-                    candidate_ids.add_id_to_choice(0, Candidate::new("Write-in".to_string(), CandidateType::WriteIn))
+                    candidate_ids.add_id_to_choice(
+                        0,
+                        Candidate::new("Write-in".to_string(), CandidateType::WriteIn),
+                    )
                 } else {
                     let ext_id: u32 = value.parse().unwrap();
                     let candidate_name = candidates.get(&ext_id).unwrap();
