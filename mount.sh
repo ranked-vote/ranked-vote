@@ -16,9 +16,6 @@ else
     git clone git@github.com:ranked-vote/reports.git
 fi
 
-mkdir -p raw-data
-s3fs -o umask=0007 -o use_path_request_style raw.ranked.vote raw-data
-
-mkdir -p preprocessed
-s3fs -o umask=0007 -o use_path_request_style data.ranked.vote preprocessed
+aws s3 cp s3://raw.ranked.vote raw-data --recursive
+aws s3 cp s3://data.ranked.vote preprocessed --recursive
 
