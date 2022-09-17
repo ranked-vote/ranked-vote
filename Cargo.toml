@@ -4,40 +4,16 @@ version = "0.1.0"
 authors = ["Paul Butler <paulgb@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 serde = { version = "1.0.114", features = ["derive"] }
-
-# CLI option parsing.
-clap = "2.33.1"
-
-# JSON parsing.
-serde_json = "1.0.56"
-
-# Colorful logging.
-colored = "1.9.3"
-
-# Hashing input files.
-sha-1 = "0.9.1"
-
-# Groupby implementation.
-itertools = "0.9.0"
-
-# Gzip compression for normalized ballot files.
+clap = { version = "3.2", features = ["derive"] }
+serde_json = "1.0.85"
+colored = "2.0"
+sha-1 = "0.10"
+itertools = "0.10.4"
 flate2 = "1.0.16"
-
-# Zip compression for certain input formats.
-zip = "0.5"
-
-# Regex for parsing certain formats.
+zip = "0.6"
 regex = "1"
-
-# For compiled regex expressions.
 lazy_static = "1.4.0"
-
-# Nom for parsing certain formats.
-nom = "6"
-
-# Excel file reader for certain formats.
-calamine = "0.16.1"
+nom = "7.1"
+calamine = "0.18.0"

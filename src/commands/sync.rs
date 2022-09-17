@@ -6,10 +6,9 @@ use std::fs;
 use std::fs::create_dir_all;
 use std::path::Path;
 
-pub fn sync(meta_dir: &str, raw_dir: &str) {
-    let raw_path = Path::new(raw_dir);
+pub fn sync(meta_dir: &Path, raw_dir: &Path) {
     for (path, mut ec) in read_meta(meta_dir) {
-        let ec_path = raw_path.join(ec.path.clone());
+        let ec_path = raw_dir.join(ec.path.clone());
         if !ec_path.is_dir() {
             eprintln!(
                 "Creating missing directory: {}",

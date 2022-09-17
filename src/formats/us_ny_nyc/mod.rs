@@ -1,6 +1,7 @@
 use crate::formats::common::CandidateMap;
 use crate::model::election::{Ballot, Candidate, CandidateType, Choice, Election};
 use calamine::{open_workbook_auto, Reader, Sheets};
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::{BTreeMap, HashMap};
 use std::fs::read_dir;
@@ -86,14 +87,14 @@ pub fn nyc_ballot_reader(path: &Path, params: BTreeMap<String, String>) -> Elect
             if colname == "Cast Vote Record" {
                 cvr_id_col = Some(i)
             } else if let Some(caps) = COLUMN_RX.captures(colname) {
-                if caps.get(1).unwrap().as_str() != &options.office_name {
+                if caps.get(1).unwrap().as_str() != options.office_name {
                     continue;
                 }
-                if caps.get(4).unwrap().as_str() != &options.jurisdiction_name {
+                if caps.get(4).unwrap().as_str() != options.jurisdiction_name {
                     continue;
                 }
                 let rank: u32 = caps.get(2).unwrap().as_str().parse().unwrap();
-                assert!(rank >= 1 && rank <= 5);
+                assert!((1..=5).contains(&rank));
                 rank_to_col.insert(rank, i);
             }
         }

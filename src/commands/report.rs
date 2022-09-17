@@ -8,10 +8,10 @@ use std::fs::create_dir_all;
 use std::path::Path;
 
 pub fn report(
-    meta_dir: &str,
-    raw_dir: &str,
-    report_dir: &str,
-    preprocessed_dir: &str,
+    meta_dir: &Path,
+    raw_dir: &Path,
+    report_dir: &Path,
+    preprocessed_dir: &Path,
     force_preprocess: bool,
     force_report: bool,
 ) {

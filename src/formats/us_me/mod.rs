@@ -1,6 +1,7 @@
 use crate::formats::common::{normalize_name, CandidateMap};
 use crate::model::election::{Ballot, Candidate, CandidateType, Choice, Election};
 use calamine::{open_workbook_auto, DataType, Reader};
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::BTreeMap;
 use std::path::Path;

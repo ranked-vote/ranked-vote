@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use regex::Regex;
 
 pub fn normalize_name(name: &str, flip_comma: bool) -> String {

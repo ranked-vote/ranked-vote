@@ -1,7 +1,9 @@
+use std::path::Path;
+
 use crate::read_metadata::read_meta;
 use colored::*;
 
-pub fn info(meta_dir: &str) {
+pub fn info(meta_dir: &Path) {
     for (_, ec) in read_meta(meta_dir) {
         eprintln!("Name: {}", ec.name.blue());
         eprintln!("Path: {}", ec.path.blue());
